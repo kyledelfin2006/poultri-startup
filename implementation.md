@@ -23,12 +23,14 @@ The supplied Poultri logo and wordmark are used as existing image assets without
 
 The generated Android project was refreshed from Expo config. Its manifest enables HTTP for the private-LAN bridge and removes old Firebase/notification metadata; Expo's permission-removal directives block unused storage, overlay, and vibration permissions from the final merged manifest.
 
-## Verification performed
+## Last recorded verification — 2026-10-15
+
+These are the most recent recorded results, not a claim that the checks were rerun today.
 
 - Passed for the updated build: `npm.cmd run lint`, `npx.cmd tsc --noEmit`, `node --check bridge/server.mjs`, Wokwi diagram JSON parsing, and `git diff --check`.
 - Passed: PlatformIO built the updated `esp32dev` firmware with Espressif32 7.1.3 and DHT library 1.19.0. Build reported 14.0% RAM and 60.9% flash use; generated firmware is under `wokwi/.pio/build/esp32dev/`.
 - Passed: local bridge contract check for health, empty reading, 24.9°C/25°C/27°C/below-setpoint readings, alert/fan fields, and invalid fan percentage rejection.
-- Not verified in this update: Wokwi's live PWM LED behavior, full Wokwi → bridge → phone delivery, physical-phone alert rendering, and EAS APK creation. The last recorded Wokwi run could not connect to `ws://localhost:9011`; retest these when the Private Gateway and Android demo device are available.
+- Not verified in that update: Wokwi's live PWM LED behavior, full Wokwi → bridge → phone delivery, physical-phone alert rendering, and EAS APK creation. The Wokwi run recorded then could not connect to `ws://localhost:9011`; this is a historical observation and does not establish the gateway's current state.
 
 The Android bundle export used Expo's `--no-bytecode` option because the sandbox denied Hermes bytecode output to its temporary directory. This validates Metro bundling, not the final APK build.
 

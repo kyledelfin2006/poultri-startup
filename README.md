@@ -143,4 +143,8 @@ Keep the bridge running between runs. The next Wokwi POST replaces its latest re
 - [Build requirements](build-requirements.md) — architecture, bridge API, setup, and verification details.
 - [Implementation notes](implementation.md) — current feature inventory and verification status.
 
+### Which document is authoritative?
+
+The supplied Poultri concept note defines product intent, but is not checked into this repository. For this prototype, [MVP requirements](mvp-requirements.md) are authoritative for scope and behavior, and [build requirements](build-requirements.md) are authoritative for architecture, interfaces, setup, and verification steps. This README is the user-facing overview; [implementation notes](implementation.md) record the current implementation and clearly dated verification status. Update affected docs with code changes and remove obsolete docs or stale status claims.
+
 **Prototype boundary:** only the Wokwi temperature/humidity sensor is simulated. There is no camera, gas sensor, production record, physical fan or temperature control, SMS, diagnosis, account, cloud service, push notification, or farm validation. The simulated fan is an LED indicator only.
