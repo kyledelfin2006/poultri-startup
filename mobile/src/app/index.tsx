@@ -24,6 +24,20 @@ type ReadingResponse = { reading: Reading | null };
 type AlertRecord = { acknowledged: boolean; recovered: boolean };
 
 const STALE_AFTER_MS = 5000;
+const colors = {
+  background: '#F7F9F6',
+  white: '#FFFFFF',
+  ink: '#173D28',
+  body: '#34493A',
+  muted: '#59675D',
+  quiet: '#68766E',
+  border: '#D6DED7',
+  green: '#27643D',
+  greenDark: '#254C32',
+  amber: '#8A4D12',
+  amberDot: '#A56B1F',
+  grayDot: '#748078',
+};
 
 async function getJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
@@ -69,7 +83,12 @@ function Button({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, secondary && styles.secondaryButton, disabled && styles.disabledButton]}
+      style={({ pressed }) => [
+        styles.button,
+        secondary && styles.secondaryButton,
+        disabled && styles.disabledButton,
+        pressed && !disabled && styles.pressedButton,
+      ]}
     >
       <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{title}</Text>
     </Pressable>
@@ -152,12 +171,22 @@ export default function HomeScreen() {
   const sampleAgeMs = reading ? Math.max(0, now - Date.parse(reading.receivedAt)) : 0;
   const stale = reading !== null && sampleAgeMs > STALE_AFTER_MS;
   const status = !connected && activeUrl
-    ? (stale ? 'DISCONNECTED · STALE READING' : 'DISCONNECTED')
+    ? (stale ? 'Disconnected · stale reading' : 'Disconnected')
     : stale
-      ? 'STALE READING'
+      ? 'Stale reading'
       : connected
-        ? (reading ? 'CONNECTED' : 'WAITING FOR WOKWI DATA')
-        : 'DISCONNECTED';
+        ? (reading ? 'Connected' : 'Waiting for Wokwi data')
+        : 'Not connected';
+  const statusDescription = stale
+    ? `Last sample received ${Math.floor(sampleAgeMs / 1000)}s ago.`
+    : connected
+      ? (reading ? 'Receiving simulated data from the local bridge.' : 'Bridge is ready. Waiting for a Wokwi reading.')
+      : message;
+  const statusDotStyle = stale
+    ? styles.statusDotStale
+    : connected
+      ? styles.statusDotConnected
+      : styles.statusDotIdle;
 
   async function connect() {
     const normalized = bridgeUrl.trim().replace(/\/+$/, '');
@@ -206,58 +235,68 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
-          <Image source={require('../../assets/poultri-logo.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="Official Poultri logo" />
-          <Image source={require('../../assets/poultri-wordmark.png')} style={styles.wordmark} resizeMode="contain" accessibilityLabel="Poultri" />
-        </View>
-
-        <Text style={styles.eyebrow}>WOKWI DEMO · SIMULATED DATA</Text>
-        <View style={styles.statusCard}>
-          <Text style={styles.status}>{status}</Text>
-          <Text style={styles.supporting}>{message}</Text>
-        </View>
-
-        <View style={styles.connectCard}>
-          <Text style={styles.sectionTitle}>Local bridge</Text>
-          <TextInput
-            accessibilityLabel="Laptop bridge URL"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            onChangeText={setBridgeUrl}
-            placeholder="http://<laptop-LAN-IP>:4174"
-            placeholderTextColor="#87938A"
-            style={styles.input}
-            value={bridgeUrl}
+          <Image
+            source={require('../../assets/poultri-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="Official Poultri logo"
           />
-          <Button title={connecting ? 'Connecting…' : 'Connect'} onPress={() => void connect()} disabled={connecting} />
-          {connecting && <ActivityIndicator color="#2B6841" style={styles.spinner} />}
+          <Image
+            source={require('../../assets/poultri-wordmark.png')}
+            style={styles.wordmark}
+            resizeMode="contain"
+            accessibilityLabel="Poultri wordmark"
+          />
         </View>
 
-        <View style={styles.readingCard}>
-          <Text style={styles.sectionTitle}>House 1</Text>
-          <View style={styles.metrics}>
-            <View style={styles.metric}>
-              <Text style={styles.metricLabel}>TEMPERATURE</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.temperatureC.toFixed(1)}°C` : '—'}</Text>
+        <View style={styles.houseHeading}>
+          <Text accessibilityRole="header" style={styles.houseTitle}>House 1</Text>
+          <Text style={styles.demoTag}>WOKWI DEMO</Text>
+        </View>
+
+        <View style={styles.statusSection} accessibilityLiveRegion="polite">
+          <View style={styles.statusLine}>
+            <View style={[styles.statusDot, statusDotStyle]} />
+            <Text style={styles.status}>{status}</Text>
+          </View>
+          <Text style={styles.statusDescription}>{statusDescription}</Text>
+        </View>
+
+        <View style={styles.readingSection}>
+          <View style={styles.temperatureRow}>
+            <View style={styles.temperatureLabelGroup}>
+              <Text style={styles.metricLabel}>Temperature</Text>
+              <Text style={styles.setpoint}>Demo setpoint {reading?.setpointC.toFixed(1) ?? '25.0'}°C</Text>
             </View>
-            <View style={styles.metric}>
-              <Text style={styles.metricLabel}>HUMIDITY</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
+            <Text style={styles.temperatureValue} adjustsFontSizeToFit numberOfLines={1}>
+              {reading ? `${reading.temperatureC.toFixed(1)}°C` : '—'}
+            </Text>
+          </View>
+
+          <View style={styles.readingDivider} />
+          <View style={styles.secondaryReadings}>
+            <View style={styles.readingRow}>
+              <Text style={styles.readingLabel}>Humidity</Text>
+              <Text style={styles.readingValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
             </View>
-            <View style={styles.metric}>
-              <Text style={styles.metricLabel}>SIM FAN</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.fanSpeedPct}%` : '—'}</Text>
+            <View style={styles.readingDivider} />
+            <View style={styles.readingRow}>
+              <Text style={styles.readingLabel}>Simulated fan</Text>
+              <Text style={styles.readingValue}>{reading ? `${reading.fanSpeedPct}%` : '—'}</Text>
             </View>
           </View>
-          <Text style={styles.supporting}>
-            {reading ? `Sample age: ${Math.floor(sampleAgeMs / 1000)}s` : 'No reading received yet'}
-            {stale ? ' · stale' : ''}
-          </Text>
-          <Text style={styles.demoLabel}>Wokwi simulated data · 25°C demo setpoint · fan is an LED indicator</Text>
+
+          <View style={styles.sampleMeta}>
+            <Text style={styles.sampleAge}>
+              {reading ? `Sample age: ${Math.floor(sampleAgeMs / 1000)}s` : 'No reading received yet'}
+              {stale ? ' · stale' : ''}
+            </Text>
+            <Text style={styles.demoLabel}>Wokwi simulated data · fan is an LED indicator</Text>
+          </View>
         </View>
 
-        <View style={styles.alertCard}>
-          <Text style={styles.sectionTitle}>Inspection prompt</Text>
+        <View style={styles.alertSection}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>Inspection prompt</Text>
           {!alertRecord ? (
             <Text style={styles.supporting}>
               {baseline === null
@@ -266,7 +305,7 @@ export default function HomeScreen() {
             </Text>
           ) : (
             <>
-              <Text style={styles.alertTitle}>
+              <Text style={[styles.alertTitle, alertRecord.recovered && styles.recoveredTitle]}>
                 {alertRecord.recovered ? 'Reading recovered' : 'Temperature threshold reached'}
               </Text>
               <Text style={styles.supporting}>
@@ -279,6 +318,26 @@ export default function HomeScreen() {
         </View>
 
         <Button title="Reset demo" onPress={resetDemo} secondary />
+
+        <View style={styles.connectionSection}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>Local bridge</Text>
+          <Text style={styles.supporting}>Connect to the laptop bridge on the same Wi-Fi network.</Text>
+          <TextInput
+            accessibilityLabel="Laptop bridge URL"
+            accessibilityHint="Enter the laptop's local bridge URL."
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            onChangeText={setBridgeUrl}
+            placeholder="http://<laptop-LAN-IP>:4174"
+            placeholderTextColor={colors.quiet}
+            style={styles.input}
+            value={bridgeUrl}
+          />
+          <Button title={connecting ? 'Connecting…' : 'Connect'} onPress={() => void connect()} disabled={connecting} />
+          {connecting && <ActivityIndicator color={colors.green} style={styles.spinner} />}
+        </View>
+
         <Text style={styles.footer}>Prototype only · no physical sensor or farm validation</Text>
       </ScrollView>
     </SafeAreaView>
@@ -286,31 +345,49 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F7F3' },
-  content: { padding: 20, gap: 14 },
-  brand: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 8 },
-  logo: { width: 44, height: 44 },
-  wordmark: { width: 150, height: 48 },
-  eyebrow: { color: '#42674C', fontSize: 11, fontWeight: '800', letterSpacing: 1, textAlign: 'center' },
-  statusCard: { backgroundColor: '#E8F0E8', borderRadius: 14, padding: 16, gap: 5 },
-  status: { color: '#173D28', fontSize: 15, fontWeight: '800' },
-  supporting: { color: '#59675D', fontSize: 13, lineHeight: 19 },
-  connectCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, gap: 10 },
-  readingCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, gap: 12 },
-  alertCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { color: '#173D28', fontSize: 16, fontWeight: '800' },
-  input: { minHeight: 48, borderColor: '#CBD5CC', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, color: '#203629', fontSize: 14 },
-  button: { minHeight: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, backgroundColor: '#27643D' },
-  secondaryButton: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#AEBDB0' },
+  safe: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 28 },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 4 },
+  logo: { width: 40, height: 40 },
+  wordmark: { width: 142, height: 48 },
+  houseHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 },
+  houseTitle: { color: colors.ink, fontSize: 24, fontWeight: '700' },
+  demoTag: { color: colors.green, fontSize: 11, fontWeight: '700', letterSpacing: 0.7 },
+  statusSection: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: 12, gap: 4 },
+  statusLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusDotConnected: { backgroundColor: colors.green },
+  statusDotStale: { backgroundColor: colors.amberDot },
+  statusDotIdle: { backgroundColor: colors.grayDot },
+  status: { color: colors.ink, fontSize: 14, fontWeight: '700' },
+  statusDescription: { color: colors.muted, fontSize: 13, lineHeight: 19, marginLeft: 16 },
+  readingSection: { paddingTop: 22, paddingBottom: 4 },
+  temperatureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 8 },
+  temperatureLabelGroup: { flexShrink: 1, gap: 5 },
+  metricLabel: { color: colors.body, fontSize: 14, fontWeight: '600' },
+  setpoint: { color: colors.muted, fontSize: 13 },
+  temperatureValue: { color: colors.ink, fontSize: 48, fontWeight: '700', flexShrink: 1, textAlign: 'right' },
+  readingDivider: { height: 1, backgroundColor: colors.border },
+  secondaryReadings: { marginTop: 8 },
+  readingRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  readingLabel: { color: colors.muted, fontSize: 14 },
+  readingValue: { color: colors.body, fontSize: 20, fontWeight: '600' },
+  sampleMeta: { gap: 4, paddingTop: 12 },
+  sampleAge: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+  demoLabel: { color: colors.greenDark, fontSize: 12, lineHeight: 17 },
+  alertSection: { borderTopWidth: 1, borderColor: colors.border, marginTop: 16, paddingTop: 18, gap: 9 },
+  sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
+  supporting: { color: colors.muted, fontSize: 14, lineHeight: 20 },
+  button: { minHeight: 48, borderRadius: 7, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, backgroundColor: colors.green },
+  secondaryButton: { backgroundColor: 'transparent', alignSelf: 'flex-start', paddingHorizontal: 8, marginTop: 2 },
+  pressedButton: { opacity: 0.78 },
   disabledButton: { opacity: 0.55 },
-  buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
-  secondaryButtonText: { color: '#254C32' },
-  spinner: { marginTop: 4 },
-  metrics: { flexDirection: 'row', gap: 12 },
-  metric: { flex: 1, backgroundColor: '#F3F6F1', borderRadius: 12, padding: 14, gap: 6 },
-  metricLabel: { color: '#627266', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
-  metricValue: { color: '#173D28', fontSize: 26, fontWeight: '800' },
-  demoLabel: { color: '#7A5B23', fontSize: 11, fontWeight: '700', lineHeight: 16 },
-  alertTitle: { color: '#8A4D12', fontSize: 17, fontWeight: '800' },
-  footer: { color: '#718075', fontSize: 11, textAlign: 'center', paddingVertical: 8 },
+  buttonText: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  secondaryButtonText: { color: colors.greenDark, fontSize: 14 },
+  alertTitle: { color: colors.amber, fontSize: 17, fontWeight: '700' },
+  recoveredTitle: { color: colors.greenDark },
+  connectionSection: { borderTopWidth: 1, borderColor: colors.border, marginTop: 8, paddingTop: 18, gap: 10 },
+  input: { minHeight: 50, borderColor: '#BCC9BF', borderWidth: 1, borderRadius: 6, paddingHorizontal: 13, backgroundColor: colors.white, color: colors.body, fontSize: 15 },
+  spinner: { marginTop: 2 },
+  footer: { color: colors.quiet, fontSize: 12, textAlign: 'center', lineHeight: 18, paddingTop: 14 },
 });

@@ -10,7 +10,7 @@ This is a demonstration prototype, not a farm-monitoring product. Wokwi readings
 
 ## Implemented in this build
 
-- `mobile/src/app/index.tsx`: one-screen mobile demo with bridge connection, live/stale state, temperature, humidity, demo setpoint and fan percentage, an acknowledgeable alert, recovery, and reset.
+- `mobile/src/app/index.tsx`: one-screen mobile demo with a flat, reading-first layout; the supplied Poultri logo and wordmark remain unchanged. It includes bridge connection, live/stale state, temperature, humidity, demo setpoint and fan percentage, an acknowledgeable alert, recovery, and reset.
 - `mobile/plugins/with-local-bridge-http.js`: Expo config plugin for Android local-LAN HTTP in the preview APK.
 - `bridge/server.mjs`: dependency-free Node HTTP bridge on port 4174 with health, latest-reading, and input validation for sensor readings, setpoint, alert state, and fan percentage.
 - `wokwi/`: ESP32/DHT22/LED PlatformIO project, diagram, and firmware. The firmware samples every two seconds, compares temperature with the demo-only 25°C setpoint, drives the LED to 0/50/100%, and posts readings through the Wokwi private gateway.
@@ -37,6 +37,8 @@ The Android bundle export used Expo's `--no-bytecode` option because the sandbox
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.
+
+[patent.md](patent.md) is a concept-derived planning brief for future MVP refinement and patent assessment. Its camera, farm-sensor, offline, SMS, multi-house, farm-record, and control stages are not implemented in this repository.
 
 ## Development
 
