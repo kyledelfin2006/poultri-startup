@@ -4,10 +4,12 @@
     "slug": "poultri",
     "scheme": "poultri",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/poultri-logo.png",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "userInterfaceStyle": "automatic"
     },
     "android": {
       "package": "com.poultri.mobile",
@@ -21,9 +23,11 @@
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/poultri-logo.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": true,
+      "userInterfaceStyle": "automatic"
     },
     "plugins": [
+      "expo-system-ui",
       "expo-router",
       "./plugins/with-local-bridge-http"
     ],
