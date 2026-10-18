@@ -26,7 +26,7 @@ The Wokwi Private Gateway is required for the simulator to reach the laptop. Wok
 ## Prerequisites
 
 1. Windows, VS Code, Git, Node.js LTS, and npm.
-2. Python 3.9+ and PlatformIO Core (or the VS Code **PlatformIO IDE** extension, which provides the PlatformIO workflow). [PlatformIO's installation guide](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html) documents the isolated Core installer; [its requirements](https://docs.platformio.org/en/latest/core/installation/requirements.html) list supported Python versions.
+2. The VS Code **PlatformIO IDE** extension is the recommended setup; it includes PlatformIO Core and can use its bundled Python, so no separate Python install is needed for this path. If installing standalone PlatformIO Core instead, install Python 3.9+ first and use [PlatformIO's isolated installer](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html); [its requirements](https://docs.platformio.org/en/latest/core/installation/requirements.html) list supported Python versions.
 3. VS Code extensions: **PlatformIO IDE** and **Wokwi for VS Code**. Sign in/activate Wokwi as prompted.
 4. A Wokwi for VS Code license that can use the private gateway. The guide below configures its local gateway at `ws://localhost:9011`.
 5. An Android phone and laptop on the same private Wi-Fi for final acceptance. The phone must be able to reach the laptop's private IPv4 address.
@@ -56,7 +56,9 @@ poultri/
 
 ## Stage 1: build and prove the Wokwi sensor project
 
-The Wokwi project files already exist under `wokwi/`; do not create a second PlatformIO project. Install PlatformIO Core with the [official isolated installer](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html), or install the PlatformIO IDE extension in VS Code. If using the Core installer, download `get-platformio.py` from the linked official instructions and run it with Python 3.9 or newer:
+The Wokwi project files already exist under `wokwi/`; do not create a second PlatformIO project. The simplest setup is to install the **PlatformIO IDE** extension in VS Code, open the `wokwi/` folder, and choose **Project Tasks → esp32dev → General → Build**. PlatformIO IDE includes Core and can use a bundled Python runtime.
+
+For a standalone PlatformIO Core installation instead, install Python 3.9 or newer, then download `get-platformio.py` using the [official isolated installer instructions](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html) and run:
 
 ```powershell
 python .\get-platformio.py
@@ -64,7 +66,7 @@ python .\get-platformio.py
 
 The installer keeps Core in the user profile and may not add `pio` to `PATH`.
 
-For this Windows setup, locate the Core executable from PowerShell and build the existing project:
+For the standalone Core path on Windows, locate the Core executable from PowerShell and build the existing project:
 
 ```powershell
 $pio = Join-Path $env:USERPROFILE '.platformio\penv\Scripts\platformio.exe'
