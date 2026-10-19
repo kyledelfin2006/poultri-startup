@@ -34,7 +34,7 @@ This repository demonstrates one small part of Poultri: **a simulated ESP32/DHT2
 
 - Wokwi simulates one ESP32 and one DHT22. Change temperature and humidity from the sensor controls.
 - The ESP32 sends readings every two seconds to the local Node bridge.
-- The mobile app displays temperature, humidity, the demo setpoint, simulated fan percentage, connection state, sample age, and an inspection prompt.
+- The mobile app opens to a House 1 overview with temperature, humidity, simulated fan percentage, connection state, and inspection-prompt state. Open House 1 for detailed readings, the demo setpoint, sample age, inspection prompt and acknowledgement, and local bridge setup.
 - The first fresh reading after connecting or resetting is saved as session context. A reading at or above the **25°C demo setpoint** creates an inspection prompt. The Wokwi LED and app show a simulated fan level: **0% below 25°C, 50% from 25°C to below 27°C, and 100% at or above 27°C**.
 - Acknowledge the prompt, lower the temperature below 25°C to show recovery, and tap **Reset Demo** to clear the app session.
 - Humidity is display-only. All values and the alert rule are illustrative.
@@ -46,11 +46,11 @@ This repository demonstrates one small part of Poultri: **a simulated ESP32/DHT2
 This section is a from-scratch Windows setup. It runs the simulator, bridge, and development tools on the laptop. The app screen runs on an Android phone, or optionally on an Android emulator on the same laptop. No physical ESP32, DHT22, or fan is needed.
 
 ~~~text
-Wokwi ESP32 simulator ──Private Gateway──> Node bridge on laptop :4174
+Wokwi ESP32 simulator ──VS Code networking──> Node bridge on laptop :4174
 Android app ─────────────────────────────> Node bridge on laptop :4174
 ~~~
 
-The **Private Gateway is required** for the Wokwi simulator to reach the laptop. Wokwi currently limits private-gateway access to paid plans; its public gateway cannot reach a service on your laptop. Check that your Wokwi account has access before setting up the connected demo. [Wokwi gateway guide](https://docs.wokwi.com/guides/esp32-wifi)
+With Wokwi for VS Code 4.0, this project reached the laptop bridge without a `[net] gateway` override. The Wokwi terminal showed `Bridge POST status: 201`, and the Android emulator displayed the same simulated reading on 2026-10-18. Browser-hosted Wokwi networking may differ. [Wokwi VS Code project configuration](https://docs.wokwi.com/vscode/project-config)
 
 ### A. Download and install the laptop tools (one time)
 
@@ -98,7 +98,7 @@ If code is not recognized, open VS Code from the Start menu, choose **File → O
 2. Wait for PlatformIO’s first-time setup to finish. It downloads the ESP32 compiler and libraries; this can take several minutes.
 3. In VS Code, click the **PlatformIO** alien-head icon in the left sidebar. Open **Project Tasks → esp32dev → General → Build**. Wait for a successful build. The firmware is saved under wokwi/.pio/build/esp32dev/.
 4. Press **Ctrl+Shift+P**, run **Wokwi: Start Simulator**, and wait for the ESP32 to print temperature and humidity readings.
-5. The wokwi.toml file points to the local Wokwi gateway at ws://localhost:9011. Wokwi for VS Code includes the gateway. Confirm it reports **Listening on TCP port 9011** and that the simulation connects to it. If the local gateway is unavailable, use the [official Wokwi Windows gateway download](https://github.com/wokwi/wokwigw/releases/latest), extract and run its executable, then restart the simulation. Keep the gateway running while testing. Do not run two gateway copies on the same port. [Gateway details](https://docs.wokwi.com/vscode/project-config)
+5. `wokwi.toml` has no external gateway override. Check the Wokwi terminal for `Bridge POST status: 201`. If you previously saw a `ws://localhost:9011` error, stop and start the simulation after updating this file. [Gateway details](https://docs.wokwi.com/vscode/project-config)
 
 You can leave the VS Code simulator window open. The next two sections use separate PowerShell windows. In each new PowerShell window, first change to the cloned repository folder, for example:
 
@@ -163,17 +163,17 @@ Scan the QR code with Expo Go and keep this terminal running. For connected read
 
 2. If Windows Firewall asks, allow Node.js on **Private networks only**. The bridge listens on port 4174.
 3. Confirm the bridge is running by opening http://localhost:4174/api/health in the laptop browser. It should show {"ok":true}.
-4. Make sure the Wokwi simulation and its private gateway are running. The serial monitor should show successful HTTP POST responses. Leave both running.
-5. Open the Poultri app on the phone. Enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
+4. Make sure the Wokwi simulation is running. Its terminal should show `Bridge POST status: 201`. Leave it running.
+5. Open the Poultri app and tap the **House 1** overview card. On its detail screen, enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect to bridge**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
 6. Wait for the app to show a reading. Keep the Wokwi DHT22 at **24.0°C** until the first reading is received; that becomes the session reference.
 7. Click the DHT22 in Wokwi to open its controls. Raise the temperature to **25.0°C**. The app should show an inspection prompt and **50%** simulated fan. At **27.0°C**, the fan indicator should show **100%**.
-8. Tap **Acknowledge**, then lower the temperature below **25.0°C**. The app should show **Reading recovered**; the prompt remains until you tap **Reset Demo**.
+8. On the House 1 detail screen, tap **Acknowledge prompt**, then lower the temperature below **25.0°C**. The app should show **Reading recovered**; the prompt remains until you tap **Reset demo**.
 
 The ESP32 sends a reading every two seconds and the app checks the bridge every second. Allow a few seconds for each sensor change to appear.
 
 ### What should be open during the connected demo
 
-- VS Code with the Wokwi simulation running and the Private Gateway available on the laptop.
+- VS Code with the Wokwi simulation running and successful bridge POSTs in its terminal.
 - One PowerShell window running npm.cmd start from bridge/.
 - The Poultri app connected to the laptop bridge. For the laptop-only emulator setup, keep the PowerShell window running the Android build/Expo server open. For the phone APK setup, the Expo server is not needed after installing the APK.
 
@@ -185,7 +185,7 @@ There is no single control that resets Wokwi, the bridge, and the app together. 
 
 1. Restart the Wokwi simulation, or set the DHT22 temperature below the alert trigger.
 2. Wait for a fresh reading in the app.
-3. Tap **Reset Demo** in the app.
+3. Open House 1 and tap **Reset demo** on its detail screen.
 4. Raise the DHT22 temperature again.
 
 Keep the bridge running between runs. The next Wokwi POST replaces its latest reading; the app reset clears the app's session reference and prompt.
@@ -194,7 +194,7 @@ Keep the bridge running between runs. The next Wokwi POST replaces its latest re
 
 - **PlatformIO Build is missing:** confirm VS Code opened the repository's `wokwi` folder, not the repository root. Wait for PlatformIO's first-time setup, then reopen **Project Tasks → esp32dev → General**.
 - **Wokwi says firmware or `diagram.json` is missing:** build first and confirm the `wokwi` folder is open. If VS Code is open at the repository root, run **Wokwi: Select Config File** and choose `wokwi/wokwi.toml`.
-- **Wokwi readings print, but the bridge gets no POSTs:** check Wokwi Private Gateway access, then confirm the local gateway is listening at `ws://localhost:9011`. The public gateway cannot connect to the laptop bridge.
+- **Wokwi readings print, but the bridge gets no POSTs:** confirm `wokwi.toml` has no `[net] gateway` override, then stop and start the simulation. Check its terminal for `Bridge POST status: 201` and verify the bridge is running on port 4174.
 - **Phone app cannot connect:** check that the bridge is running, enter the laptop's Wi-Fi IPv4 address with port `4174`, keep phone and laptop on the same Wi-Fi, and allow Node through Windows Firewall on Private networks. Use the installed preview APK for the connected demo.
 - **Emulator app cannot connect:** enter `http://10.0.2.2:4174` as the bridge URL and check Windows Firewall.
 - **Old reading remains visible:** the app labels readings older than five seconds as stale. Confirm Wokwi is running and sending successful POSTs.

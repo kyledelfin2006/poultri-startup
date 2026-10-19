@@ -16,26 +16,26 @@ flowchart LR
 
 - **Wokwi:** one simulated ESP32, DHT22, and PWM LED. The firmware uses a demo-only 25°C alert setpoint and 0/50/100% LED levels.
 - **Bridge:** one Node.js process using built-in modules only. It keeps the most recent valid sample in memory.
-- **Mobile:** one Expo Router screen. It polls the bridge, displays temperature, humidity, setpoint, fan percentage, connection state, and one acknowledgeable prompt.
+- **Mobile:** an Expo Router House 1 overview and detail screen. The overview shows temperature, humidity, simulated fan percentage, connection/data state, and prompt state. The detail screen includes setpoint, sample age, reference reading, prompt acknowledgement/recovery, local bridge setup, and reset. Shared in-memory session state survives route changes.
 - **Network paths:** Wokwi firmware calls `http://host.wokwi.internal:4174`; the phone calls `http://<laptop-LAN-IPv4>:4174`.
 
 This is the **demo architecture**, not the planned farm installation. The concept note's on-site processing and internet-independent monitoring are future capabilities; this Wokwi-to-laptop path does not test them. The 25°C threshold and fan levels are demo choices because the concept note defines no numeric values. The LED is a visual indicator only, not a connected fan.
 
-The Wokwi Private Gateway is required for the simulator to reach the laptop. Wokwi's current networking guide says private-gateway access is for paying users; confirm your Wokwi plan/license before depending on this path. The public gateway cannot reach the laptop's local network. Wokwi for VS Code includes a bundled gateway, but its local endpoint must be available at `ws://localhost:9011`. In the verification run recorded on 2026-10-15, the simulator started and printed DHT22 readings, but reported that this endpoint was unavailable, so no readings reached the bridge. This is a dated observation, not a statement about the gateway's current state. [Wokwi Wi-Fi and gateway guide](https://docs.wokwi.com/guides/esp32-wifi), [Wokwi VS Code project configuration](https://docs.wokwi.com/vscode/project-config).
+Wokwi for VS Code 4.0 supplied working networking for this project with no `[net] gateway` override. On 2026-10-18, the Wokwi terminal reported `Bridge POST status: 201`, the local bridge returned the same reading, and the Android emulator displayed it. The simulator UI labeled the connection "Public IoT Gateway"; this observed VS Code behavior should not be generalized to browser-hosted Wokwi, whose public gateway documentation says it cannot reach the local network. The earlier explicit `ws://localhost:9011` override failed and has been removed. [Wokwi Wi-Fi and gateway guide](https://docs.wokwi.com/guides/esp32-wifi), [Wokwi VS Code project configuration](https://docs.wokwi.com/vscode/project-config).
 
 ## Prerequisites
 
 1. Windows, VS Code, Git, Node.js LTS, and npm.
 2. The VS Code **PlatformIO IDE** extension is the recommended setup; it includes PlatformIO Core and can use its bundled Python, so no separate Python install is needed for this path. If installing standalone PlatformIO Core instead, install Python 3.9+ first and use [PlatformIO's isolated installer](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html); [its requirements](https://docs.platformio.org/en/latest/core/installation/requirements.html) list supported Python versions.
 3. VS Code extensions: **PlatformIO IDE** and **Wokwi for VS Code**. Sign in/activate Wokwi as prompted.
-4. A Wokwi for VS Code license that can use the private gateway. The guide below configures its local gateway at `ws://localhost:9011`.
-5. An Android phone and laptop on the same private Wi-Fi for final acceptance. The phone must be able to reach the laptop's private IPv4 address.
+4. An activated Wokwi for VS Code extension.
+5. An Android phone and laptop on the same private Wi-Fi for phone testing. The phone must be able to reach the laptop's private IPv4 address.
 
-If the Wokwi private gateway is unavailable, finish the sensor-only serial stage. The end-to-end local bridge demo is blocked until private gateway access is available; do not replace the agreed local architecture with a cloud tunnel or broker.
+If Wokwi cannot post to the bridge, finish the sensor-only serial stage and check the Wokwi networking configuration before the connected demo. Do not replace the agreed local architecture with a cloud tunnel or broker.
 
 ## Project tree
 
-The files below are present in the repository. `mobile/` includes the one-screen app and a local Expo config plugin for Android's private-LAN HTTP demo setting.
+The files below are present in the repository. `mobile/` includes the two-screen app and a local Expo config plugin for Android's private-LAN HTTP demo setting.
 
 ```text
 poultri/
@@ -45,7 +45,9 @@ poultri/
 ├─ mobile/
 │  ├─ app.json                         # loads the local HTTP config plugin
 │  ├─ plugins/with-local-bridge-http.js
-│  └─ src/app/index.tsx                # implemented demo screen
+│  ├─ src/app/index.tsx                # House 1 overview
+│  ├─ src/app/house-1.tsx              # readings, prompt, and bridge setup
+│  └─ src/demo-session.tsx             # shared Wokwi bridge session state
 └─ wokwi/
    ├─ platformio.ini
    ├─ wokwi.toml
@@ -129,12 +131,9 @@ The DHT22 data pin is GPIO 15; the simulated fan LED is driven on GPIO 18 throug
 version = 1
 firmware = '.pio/build/esp32dev/firmware.bin'
 elf = '.pio/build/esp32dev/firmware.elf'
-
-[net]
-gateway = 'ws://localhost:9011'
 ```
 
-Wokwi reads this file next to `platformio.ini`; build the firmware before starting the simulator. The local gateway setting connects the VS Code simulation to the private gateway. [PlatformIO project setup](https://docs.wokwi.com/vscode/platformio), [gateway configuration](https://github.com/wokwi/wokwigw#usage).
+Wokwi reads this file next to `platformio.ini`; build the firmware before starting the simulator. With no `[net] gateway` override, Wokwi for VS Code can use its bundled gateway. [PlatformIO project setup](https://docs.wokwi.com/vscode/platformio), [Wokwi project configuration](https://docs.wokwi.com/vscode/project-config).
 
 ### `wokwi/src/main.cpp`
 
@@ -247,7 +246,7 @@ Push-Location .\wokwi
 Pop-Location
 ```
 
-If VS Code is already providing `pio` on `PATH`, use `pio run` instead. When Wokwi reports that `ws://localhost:9011` is unavailable, the simulator can still demonstrate the DHT22 locally, but the bridge and mobile app will receive no new samples until the Private Gateway is active.
+If VS Code is already providing `pio` on `PATH`, use `pio run` instead. If Wokwi still reports a `ws://localhost:9011` error, stop and start the simulation so it reloads the updated `wokwi.toml`. Confirm `Bridge POST status: 201` in the Wokwi terminal.
 
 ## Stage 2: run the local Node bridge
 
@@ -408,7 +407,14 @@ The stored sample is in-memory only and disappears when the bridge stops. The br
 
 ## Stage 3: connect the mobile app
 
-The app uses Expo SDK 57 and Expo Router. The implemented screen at `mobile/src/app/index.tsx` uses React Native primitives and the installed safe-area package. The code below documents its current behavior.
+The app uses Expo SDK 57, Expo Router, React Native primitives, and the installed safe-area package. The current two-screen flow and shared session are implemented in these modules:
+
+- `mobile/src/app/index.tsx` renders the House 1 overview and links to its detail route.
+- `mobile/src/app/house-1.tsx` renders environmental readings, the simulated fan, the inspection prompt, and local bridge controls.
+- `mobile/src/demo-session.tsx` owns bridge polling and in-memory reading, reference, prompt, acknowledgement, recovery, and reset state. The provider wraps the router in `mobile/src/app/_layout.tsx`, so route changes preserve the active demo session.
+- `mobile/src/ui.tsx` contains the shared system light/dark Poultri palette and branded header. The supplied logo and wordmark remain unchanged.
+
+The overview shows temperature, humidity, simulated fan percentage, connection/data status, and prompt status. With no reading, values show a dash and the waiting, stale, or disconnected state remains visible. The detail screen includes the setpoint, sample age, reference reading, acknowledgement and recovery, bridge connection, and reset. Both routes label Wokwi data as simulated.
 
 ### Android local HTTP configuration
 
@@ -441,327 +447,6 @@ module.exports = function withLocalBridgeHttp(config) {
 };
 ```
 
-### `mobile/src/app/index.tsx`
-
-```tsx
-import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-type Reading = {
-  temperatureC: number;
-  humidityPct: number;
-  setpointC: number;
-  alertActive: boolean;
-  fanSpeedPct: number;
-  receivedAt: string;
-};
-
-type ReadingResponse = { reading: Reading | null };
-type AlertRecord = { acknowledged: boolean; recovered: boolean };
-
-const STALE_AFTER_MS = 5000;
-
-async function getJson<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2500);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return (await response.json()) as T;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-function isReading(value: unknown): value is Reading {
-  if (!value || typeof value !== 'object') return false;
-  const sample = value as Partial<Reading>;
-  return Number.isFinite(sample.temperatureC)
-    && Number.isFinite(sample.humidityPct)
-    && Number.isFinite(sample.setpointC)
-    && typeof sample.alertActive === 'boolean'
-    && typeof sample.fanSpeedPct === 'number'
-    && Number.isInteger(sample.fanSpeedPct)
-    && sample.fanSpeedPct >= 0
-    && sample.fanSpeedPct <= 100
-    && typeof sample.receivedAt === 'string'
-    && Number.isFinite(Date.parse(sample.receivedAt));
-}
-
-function Button({
-  title,
-  onPress,
-  disabled = false,
-  secondary = false,
-}: {
-  title: string;
-  onPress: () => void;
-  disabled?: boolean;
-  secondary?: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.button, secondary && styles.secondaryButton, disabled && styles.disabledButton]}
-    >
-      <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{title}</Text>
-    </Pressable>
-  );
-}
-
-export default function HomeScreen() {
-  const [bridgeUrl, setBridgeUrl] = useState('');
-  const [activeUrl, setActiveUrl] = useState('');
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const [message, setMessage] = useState('Enter the laptop bridge URL, then connect.');
-  const [reading, setReading] = useState<Reading | null>(null);
-  const [baseline, setBaseline] = useState<number | null>(null);
-  const [alertRecord, setAlertRecord] = useState<AlertRecord | null>(null);
-  const [now, setNow] = useState(0);
-  const baselineRef = useRef<number | null>(null);
-  const alertRef = useRef<AlertRecord | null>(null);
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!connected || !activeUrl) return undefined;
-    let active = true;
-    let busy = false;
-
-    const poll = async () => {
-      if (busy) return;
-      busy = true;
-      try {
-        const payload = await getJson<ReadingResponse>(`${activeUrl}/api/reading`);
-        if (!active) return;
-        if (payload.reading === null) {
-          setReading(null);
-          return;
-        }
-        if (!isReading(payload.reading)) throw new Error('Bridge returned an invalid reading.');
-
-        const sample = payload.reading;
-        setReading(sample);
-        const fresh = Date.now() - Date.parse(sample.receivedAt) <= STALE_AFTER_MS;
-        if (!fresh) return;
-
-        if (baselineRef.current === null) {
-          baselineRef.current = sample.temperatureC;
-          setBaseline(sample.temperatureC);
-        }
-
-        const recovered = !sample.alertActive;
-        if (alertRef.current === null && sample.alertActive) {
-          const next = { acknowledged: false, recovered: false };
-          alertRef.current = next;
-          setAlertRecord(next);
-        } else if (alertRef.current !== null) {
-          const next = { ...alertRef.current, recovered };
-          alertRef.current = next;
-          setAlertRecord(next);
-        }
-      } catch (error) {
-        if (active) {
-          setConnected(false);
-          setMessage(`Bridge disconnected: ${error instanceof Error ? error.message : 'request failed'}`);
-        }
-      } finally {
-        busy = false;
-      }
-    };
-
-    void poll();
-    const timer = setInterval(() => void poll(), 1000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [activeUrl, connected]);
-
-  const sampleAgeMs = reading ? Math.max(0, now - Date.parse(reading.receivedAt)) : 0;
-  const stale = reading !== null && sampleAgeMs > STALE_AFTER_MS;
-  const status = !connected && activeUrl
-    ? (stale ? 'DISCONNECTED · STALE READING' : 'DISCONNECTED')
-    : stale
-      ? 'STALE READING'
-      : connected
-        ? (reading ? 'CONNECTED' : 'WAITING FOR WOKWI DATA')
-        : 'DISCONNECTED';
-
-  async function connect() {
-    const normalized = bridgeUrl.trim().replace(/\/+$/, '');
-    if (!/^http:\/\//i.test(normalized)) {
-      setMessage('Enter the laptop URL starting with http://');
-      return;
-    }
-
-    setConnecting(true);
-    setConnected(false);
-    setMessage('Checking bridge…');
-    try {
-      const health = await getJson<{ ok: boolean }>(`${normalized}/api/health`);
-      if (health.ok !== true) throw new Error('Bridge health check failed.');
-      baselineRef.current = null;
-      alertRef.current = null;
-      setBaseline(null);
-      setAlertRecord(null);
-      setReading(null);
-      setActiveUrl(normalized);
-      setConnected(true);
-      setMessage('Connected. Waiting for a fresh Wokwi reading.');
-    } catch (error) {
-      setMessage(`Could not connect: ${error instanceof Error ? error.message : 'request failed'}`);
-    } finally {
-      setConnecting(false);
-    }
-  }
-
-  function acknowledge() {
-    if (!alertRef.current) return;
-    const next = { ...alertRef.current, acknowledged: true };
-    alertRef.current = next;
-    setAlertRecord(next);
-  }
-
-  function resetDemo() {
-    baselineRef.current = null;
-    alertRef.current = null;
-    setBaseline(null);
-    setAlertRecord(null);
-    setMessage('Demo reset. The next fresh reading becomes the reference.');
-  }
-
-  return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.brand}>
-          <Image source={require('../../assets/poultri-logo.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="Official Poultri logo" />
-          <Image source={require('../../assets/poultri-wordmark.png')} style={styles.wordmark} resizeMode="contain" accessibilityLabel="Poultri" />
-        </View>
-
-        <Text style={styles.eyebrow}>WOKWI DEMO · SIMULATED DATA</Text>
-        <View style={styles.statusCard}>
-          <Text style={styles.status}>{status}</Text>
-          <Text style={styles.supporting}>{message}</Text>
-        </View>
-
-        <View style={styles.connectCard}>
-          <Text style={styles.sectionTitle}>Local bridge</Text>
-          <TextInput
-            accessibilityLabel="Laptop bridge URL"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            onChangeText={setBridgeUrl}
-            placeholder="http://<laptop-LAN-IP>:4174"
-            placeholderTextColor="#87938A"
-            style={styles.input}
-            value={bridgeUrl}
-          />
-          <Button title={connecting ? 'Connecting…' : 'Connect'} onPress={() => void connect()} disabled={connecting} />
-          {connecting && <ActivityIndicator color="#2B6841" style={styles.spinner} />}
-        </View>
-
-        <View style={styles.readingCard}>
-          <Text style={styles.sectionTitle}>House 1</Text>
-          <View style={styles.metrics}>
-            <View style={styles.metric}>
-              <Text style={styles.metricLabel}>TEMPERATURE</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.temperatureC.toFixed(1)}°C` : '—'}</Text>
-            </View>
-            <View style={styles.metric}>
-              <Text style={styles.metricLabel}>HUMIDITY</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
-            </View>
-            <View style={styles.metric}>
-              <Text style={styles.metricLabel}>SIM FAN</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.fanSpeedPct}%` : '—'}</Text>
-            </View>
-          </View>
-          <Text style={styles.supporting}>
-            {reading ? `Sample age: ${Math.floor(sampleAgeMs / 1000)}s` : 'No reading received yet'}
-            {stale ? ' · stale' : ''}
-          </Text>
-          <Text style={styles.demoLabel}>Wokwi simulated data · 25°C demo setpoint · fan is an LED indicator</Text>
-        </View>
-
-        <View style={styles.alertCard}>
-          <Text style={styles.sectionTitle}>Inspection prompt</Text>
-          {!alertRecord ? (
-            <Text style={styles.supporting}>
-              {baseline === null
-                ? 'Waiting for the reference reading.'
-                : `Reference: ${baseline.toFixed(1)}°C · prompt at ${reading?.setpointC.toFixed(1) ?? '25.0'}°C.`}
-            </Text>
-          ) : (
-            <>
-              <Text style={styles.alertTitle}>
-                {alertRecord.recovered ? 'Reading recovered' : 'Temperature threshold reached'}
-              </Text>
-              <Text style={styles.supporting}>
-                {alertRecord.acknowledged ? 'Acknowledged' : 'Please inspect House 1'}
-                {alertRecord.recovered ? ' · prompt retained' : ''}
-              </Text>
-              {!alertRecord.acknowledged && <Button title="Acknowledge" onPress={acknowledge} />}
-            </>
-          )}
-        </View>
-
-        <Button title="Reset demo" onPress={resetDemo} secondary />
-        <Text style={styles.footer}>Prototype only · no physical sensor or farm validation</Text>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F7F3' },
-  content: { padding: 20, gap: 14 },
-  brand: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 8 },
-  logo: { width: 44, height: 44 },
-  wordmark: { width: 150, height: 48 },
-  eyebrow: { color: '#42674C', fontSize: 11, fontWeight: '800', letterSpacing: 1, textAlign: 'center' },
-  statusCard: { backgroundColor: '#E8F0E8', borderRadius: 14, padding: 16, gap: 5 },
-  status: { color: '#173D28', fontSize: 15, fontWeight: '800' },
-  supporting: { color: '#59675D', fontSize: 13, lineHeight: 19 },
-  connectCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, gap: 10 },
-  readingCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, gap: 12 },
-  alertCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, gap: 10 },
-  sectionTitle: { color: '#173D28', fontSize: 16, fontWeight: '800' },
-  input: { minHeight: 48, borderColor: '#CBD5CC', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, color: '#203629', fontSize: 14 },
-  button: { minHeight: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, backgroundColor: '#27643D' },
-  secondaryButton: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#AEBDB0' },
-  disabledButton: { opacity: 0.55 },
-  buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
-  secondaryButtonText: { color: '#254C32' },
-  spinner: { marginTop: 4 },
-  metrics: { flexDirection: 'row', gap: 12 },
-  metric: { flex: 1, backgroundColor: '#F3F6F1', borderRadius: 12, padding: 14, gap: 6 },
-  metricLabel: { color: '#627266', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
-  metricValue: { color: '#173D28', fontSize: 26, fontWeight: '800' },
-  demoLabel: { color: '#7A5B23', fontSize: 11, fontWeight: '700', lineHeight: 16 },
-  alertTitle: { color: '#8A4D12', fontSize: 17, fontWeight: '800' },
-  footer: { color: '#718075', fontSize: 11, textAlign: 'center', paddingVertical: 8 },
-});
-```
-
 ## Stage 4: run each part and connect them
 
 Use three terminals from the repository root, one per process:
@@ -780,7 +465,7 @@ Push-Location .\wokwi
 Pop-Location
 ```
 
-Start the Wokwi simulator in VS Code after the build. If the repository root is open and Wokwi does not find the nested project, use Command Palette → **Wokwi: Select Config File** and choose `wokwi/wokwi.toml`. The `[net] gateway` setting above points to `ws://localhost:9011`; confirm the Private Gateway is active. Click the DHT22, change the temperature and humidity, and confirm the serial values follow the controls. The Wokwi firmware should log successful HTTP POST status codes. If the simulator reports that the gateway is unavailable, Wokwi can run the sensor simulation by itself, but the mobile app will not receive readings until the Private Gateway is active.
+Start the Wokwi simulator in VS Code after the build. If the repository root is open and Wokwi does not find the nested project, use Command Palette → **Wokwi: Select Config File** and choose `wokwi/wokwi.toml`. Click the DHT22, change the temperature and humidity, and confirm the serial values follow the controls. The Wokwi terminal should log `Bridge POST status: 201`. If it cannot post, the sensor simulation can still run by itself, but the mobile app will not receive new readings until networking works.
 
 ```powershell
 # Terminal 3
@@ -789,7 +474,7 @@ npm.cmd install
 npx.cmd expo start
 ```
 
-Scan the QR code with Expo Go for UI iteration. Enter the laptop's Wi-Fi IPv4 bridge URL in the app and tap **Connect**. For a complete alert demo, leave the DHT22 at 24°C while the app connects; raise it to 25°C for an alert and 50% fan indication, then to 27°C for 100%. Lower it below 25°C to show recovery. For acceptance on Android, create a fresh preview APK after changing `app.json`:
+Scan the QR code with Expo Go for UI iteration. Open the House 1 card, enter the laptop's Wi-Fi IPv4 bridge URL on its detail screen, and tap **Connect to bridge**. For a complete alert demo, leave the DHT22 at 24°C while the app connects; raise it to 25°C for an alert and 50% fan indication, then to 27°C for 100%. Lower it below 25°C to show recovery. For acceptance on Android, create a fresh preview APK after changing `app.json`:
 
 ```powershell
 npx.cmd eas-cli@latest build --platform android --profile preview
@@ -845,7 +530,7 @@ flowchart LR
 1. **Firmware build:** from `wokwi/`, `pio run` succeeds. The simulator starts and DHT22 slider changes appear in serial output.
 2. **Bridge:** check health, empty state, valid POST/GET, malformed JSON rejection, invalid range rejection, and latest-reading replacement. If installed, run `wokwi-cli lint` on `wokwi/diagram.json`.
 3. **Mobile static checks:** from `mobile/`, run `npm.cmd run lint` and `npx.cmd tsc --noEmit`. Resolve Expo config with `npx.cmd expo config --type prebuild` and verify the local HTTP plugin loads.
-4. **Phone network check:** with the bridge, gateway, and Wokwi running, Android on the same Wi-Fi sees samples and fan state update after slider changes. Verify 24.9°C = clear/0%, 25.0°C = alert/50%, 27.0°C = alert/100%, and below 25°C = recovered/0%. Stop Wokwi and confirm stale. Acknowledge, reset the app state, and confirm the next fresh reading becomes the session reference.
+4. **Phone network check:** with the bridge and Wokwi running, Android on the same Wi-Fi sees samples and fan state update after slider changes. Verify 24.9°C = clear/0%, 25.0°C = alert/50%, 27.0°C = alert/100%, and below 25°C = recovered/0%. Stop Wokwi and confirm stale. Acknowledge, reset the app state, and confirm the next fresh reading becomes the session reference.
 5. **Timed demo:** rehearse the presenter path in [mvp-requirements.md](mvp-requirements.md) with setup complete; it must finish in under two minutes.
 
 Passing lint or type checks is not proof of Android network delivery. Do not describe this prototype as physical sensor integration, the concept note's on-site/offline system, physical fan control, a validated alert rule, or a field-tested product.

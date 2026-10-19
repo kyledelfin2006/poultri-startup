@@ -26,7 +26,7 @@ The app is for poultry-farm staff who need to understand the condition of a hous
 
 ### Navigation by stage
 
-- **MVP 0:** Keep the existing one-screen demo. The presenter connects to the laptop bridge and reviews the simulated reading and prompt on that screen.
+- **MVP 0:** Open to the House 1 overview with temperature, humidity, simulated fan percentage, connection/data status, and prompt state. Open House 1 to connect to the laptop bridge and review all simulated readings and prompt controls.
 - **MVP 1:** Open directly to the overview for the single assessed house. Open an alert review from its summary. Do not add a farm or house picker while only one house is supported.
 - **MVP 2:** Add camera-derived indicators and selected farm-record context inside the relevant alert review. Keep the house overview focused on the current state.
 - **MVP 3:** Make local-system, connection, queue, and recovery information available from the overview through a system-status area. Show SMS state with the related alert.
@@ -39,7 +39,8 @@ This is a proposed information structure, not a route or navigation implementati
 
 | Surface | Purpose | Planned content |
 |---|---|---|
-| Demo screen (MVP 0) | Show the simulated workflow to a presenter. | Bridge URL and connection state, latest temperature and humidity, demo setpoint, simulated fan percentage, source label, inspection prompt, acknowledge, recovery, and reset. |
+| House overview (MVP 0) | Show the house's key simulated values at a glance. | House 1, temperature, humidity, simulated fan percentage, connection/data status, and inspection-prompt state. |
+| House detail (MVP 0) | Show and operate the complete simulated workflow. | Environmental readings, demo setpoint, fan indicator, sample age, session reference, bridge URL and connection state, inspection prompt, acknowledge, recovery, and reset. |
 | House overview (MVP 1+) | Let staff scan a house's current condition. | House identity, data age and availability, active review status, and supported environmental readings. A single-house stage opens here directly. |
 | Alert review (MVP 1+) | Explain why a house was flagged and record staff review. | Configured condition, concise reason, timestamped supporting information, acknowledgement or inspection state, and the agreed action/outcome fields. |
 | System status (MVP 3+) | Explain local monitoring and data movement. | Local monitoring availability, connection state, last received data, pending or queued items, recovery/synchronization state, and relevant errors. |
@@ -53,13 +54,19 @@ Do not add separate camera, records, analytics, or control dashboards by default
 
 **Purpose:** Demonstrate one simulated reading-to-inspection-prompt workflow to judges, mentors, and prospective stakeholders.
 
-**Screen hierarchy:**
+**Overview hierarchy:**
 
 1. Official Poultri logo and wordmark, displayed unchanged.
 2. Persistent `Wokwi simulated data` identification and a compact connection/waiting/stale/disconnected status.
-3. Temperature as the primary reading; humidity and simulated fan percentage as secondary values; the demo setpoint and sample age remain easy to find.
-4. The inspection prompt and its acknowledgement or recovery state.
-5. Bridge setup and `Reset Demo` controls, available on the same scrollable screen.
+3. A bold House 1 card with temperature, humidity, and simulated fan percentage; connection/data status and prompt state remain visible in the card.
+4. A clear action opens House 1 detail. The official logo and wordmark remain unchanged.
+
+**House detail hierarchy:**
+
+1. Environmental readings with temperature, humidity, demo setpoint, sample age, and stale/current state.
+2. Simulated fan percentage and an explanation that the Wokwi LED is not physical equipment.
+3. Inspection prompt with reference reading, acknowledgement, and recovery state.
+4. Local bridge URL and connection controls, followed by `Reset Demo`.
 
 **Flow and states:**
 
@@ -70,6 +77,8 @@ Do not add separate camera, records, analytics, or control dashboards by default
 - Allow acknowledgement. When temperature falls below the setpoint, show recovery and retain the prompt until reset.
 - Reset clears the app session reference and prompt. It does not change the Wokwi sensor value.
 - Label readings as simulated during waiting, connected, stale, and disconnected states. Never imply that they came from a farm.
+- Keep bridge, polling, reference, and prompt state in memory above the route stack so opening or leaving House 1 does not reset the session.
+- Use the selected deep-green card, bright Poultri green accents, white detail sections, yellow attention states, and red only for an active inspection prompt.
 
 The exact threshold, fan levels, setup, and presenter walkthrough remain governed by [mvp-requirements.md](mvp-requirements.md). The simulated fan is an LED indicator, not physical equipment.
 
@@ -136,14 +145,14 @@ The control UI does not set limits or decide when a farm should operate equipmen
 ### Layout and hierarchy
 
 - Use a flat, mobile-first layout with generous spacing, solid-color surfaces, and simple dividers.
-- Prefer open sections and aligned rows over repeated rounded cards, nested containers, or symmetrical metric-card grids.
+- For MVP 0, use one bold House 1 overview card and white section boxes on the detail screen. Keep readings grouped without nested cards or decorative metric tiles.
 - Keep the house, data age, and active review easy to scan. Let the most urgent supported state lead; otherwise, make the current readings clear.
 - Keep primary actions close to the information they affect. Keep setup and system details accessible without competing with the main reading or review task.
 - Use native system typography with a clear screen-title, section-title, reading, label, and supporting-text hierarchy. Do not depend on Inter or oversized italic serif headlines.
 
 ### Color, assets, and components
 
-- Use the prototype's Poultri green with neutral backgrounds and readable text. Use semantic status colors sparingly and pair each with a text label or symbol.
+- Use a deep-green House 1 card, vivid Poultri-green highlights, and white detail boxes. Use yellow for attention states and red only for an active inspection prompt; pair every status color with readable text.
 - Use solid fills and restrained borders. Do not use purple/blue or pink/indigo gradients, neon accents, glass effects, glow, or decorative shadows.
 - Preserve `mobile/assets/poultri-logo.png` and `mobile/assets/poultri-wordmark.png` as supplied; do not redraw, crop into a new mark, filter, or recolor them.
 - Keep controls visually simple and native-feeling. Provide a comfortable touch target and visible pressed/disabled feedback.
