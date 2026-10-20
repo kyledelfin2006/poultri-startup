@@ -12,11 +12,13 @@ flowchart LR
     App[Poultri mobile app] -->|GET every 1 second over LAN| Bridge
     Bridge -->|latest reading + setpoint + alert + fan state| App
     App --> Prompt[Inspection prompt + simulated fan percentage]
+    App --> FanVisual[App-only fan drawing from fan percentage]
+    App --> Vent[App-only vent visual from fan percentage]
 ```
 
 - **Wokwi:** one simulated ESP32, DHT22, and PWM LED. The firmware uses a demo-only 25°C alert setpoint and 0/50/100% LED levels.
 - **Bridge:** one Node.js process using built-in modules only. It keeps the most recent valid sample in memory.
-- **Mobile:** an Expo Router House 1 overview and detail screen. The overview shows temperature, humidity, simulated fan percentage, connection/data state, and prompt state. The detail screen includes setpoint, sample age, reference reading, prompt acknowledgement/recovery, local bridge setup, and reset. Shared in-memory session state survives route changes.
+- **Mobile:** an Expo Router House 1 overview and detail screen. The overview shows temperature, humidity, simulated fan percentage, connection/data state, and prompt state. The detail screen includes setpoint, sample age, reference reading, prompt acknowledgement/recovery, app-only fan and vent visuals, local bridge setup, and reset. Shared in-memory session state survives route changes.
 - **Network paths:** Wokwi firmware calls `http://host.wokwi.internal:4174`; the phone calls `http://<laptop-LAN-IPv4>:4174`.
 
 This is the **demo architecture**, not the planned farm installation. The concept note's on-site processing and internet-independent monitoring are future capabilities; this Wokwi-to-laptop path does not test them. The 25°C threshold and fan levels are demo choices because the concept note defines no numeric values. The LED is a visual indicator only, not a connected fan.
@@ -410,11 +412,11 @@ The stored sample is in-memory only and disappears when the bridge stops. The br
 The app uses Expo SDK 57, Expo Router, React Native primitives, and the installed safe-area package. The current two-screen flow and shared session are implemented in these modules:
 
 - `mobile/src/app/index.tsx` renders the House 1 overview and links to its detail route.
-- `mobile/src/app/house-1.tsx` renders environmental readings, the simulated fan, the inspection prompt, and local bridge controls.
+- `mobile/src/app/house-1.tsx` renders environmental readings, an animated app-only fan drawing and vent visual derived from `fanSpeedPct`, the inspection prompt, and local bridge controls.
 - `mobile/src/demo-session.tsx` owns bridge polling and in-memory reading, reference, prompt, acknowledgement, recovery, and reset state. The provider wraps the router in `mobile/src/app/_layout.tsx`, so route changes preserve the active demo session.
 - `mobile/src/ui.tsx` contains the shared system light/dark Poultri palette and branded header. The supplied logo and wordmark remain unchanged.
 
-The overview shows temperature, humidity, simulated fan percentage, connection/data status, and prompt status. With no reading, values show a dash and the waiting, stale, or disconnected state remains visible. The detail screen includes the setpoint, sample age, reference reading, acknowledgement and recovery, bridge connection, and reset. Both routes label Wokwi data as simulated.
+The overview shows temperature, humidity, simulated fan percentage, connection/data status, and prompt status. With no reading, values show a dash and the waiting, stale, or disconnected state remains visible. The detail screen includes the setpoint, sample age, reference reading, acknowledgement and recovery, bridge connection, reset, and a combined simulated-airflow panel for the fan and vent visuals. The fan drawing is still at 0%, spins at 50% or 100%, and stops animating for stale/disconnected data or reduced motion. The vent louvers animate closed at 0%, half-open at 50%, and fully open at 100% using the existing `fanSpeedPct`; there is no added bridge field or control rule. Before a reading both drawings show a dash. Retained values are marked stale or disconnected. The app labels both as app-only simulations: no physical fan, vent, or servo is connected or controlled. Both routes label Wokwi data as simulated.
 
 ### Android local HTTP configuration
 
@@ -485,7 +487,7 @@ Install that APK, keep phone and laptop on the same Wi-Fi, and enter the same la
 ## Demo logic and failure behavior
 
 - On successful Connect, `/api/health` is checked and the app clears the prior session's reading, reference, and prompt.
-- The app polls `/api/reading` every second. The first fresh sample is retained as session context; firmware-reported `setpointC`, `alertActive`, and `fanSpeedPct` drive the displayed alert and fan state. Humidity is display-only.
+- The app polls `/api/reading` every second. The first fresh sample is retained as session context; firmware-reported `setpointC`, `alertActive`, and `fanSpeedPct` drive the displayed alert and fan state. The detail fan and vent illustrations follow that same fan percentage without controlling equipment. Humidity is display-only.
 - The firmware activates the illustrative prompt at **25°C or higher**. Fan indication is 0% below 25°C, 50% from 25°C to below 27°C, and 100% at or above 27°C. Both values are demo-only and are not poultry guidance.
 - One prompt is created on the first active sample. It remains after acknowledgement and after recovery; lowering temperature below 25°C shows recovery.
 - Reset clears the local reference and prompt. The sensor value is not changed, so lower it below 25°C or restart Wokwi before a new run.
@@ -530,7 +532,7 @@ flowchart LR
 1. **Firmware build:** from `wokwi/`, `pio run` succeeds. The simulator starts and DHT22 slider changes appear in serial output.
 2. **Bridge:** check health, empty state, valid POST/GET, malformed JSON rejection, invalid range rejection, and latest-reading replacement. If installed, run `wokwi-cli lint` on `wokwi/diagram.json`.
 3. **Mobile static checks:** from `mobile/`, run `npm.cmd run lint` and `npx.cmd tsc --noEmit`. Resolve Expo config with `npx.cmd expo config --type prebuild` and verify the local HTTP plugin loads.
-4. **Phone network check:** with the bridge and Wokwi running, Android on the same Wi-Fi sees samples and fan state update after slider changes. Verify 24.9°C = clear/0%, 25.0°C = alert/50%, 27.0°C = alert/100%, and below 25°C = recovered/0%. Stop Wokwi and confirm stale. Acknowledge, reset the app state, and confirm the next fresh reading becomes the session reference.
+4. **Phone network check:** with the bridge and Wokwi running, Android on the same Wi-Fi sees samples and fan state update after slider changes. Verify 24.9°C = clear/0%/still fan/vent closed, 25.0°C = alert/50%/spinning fan/vent half-open, 27.0°C = alert/100%/faster fan/vent fully open, and below 25°C = recovered/0%/still fan/vent closed. Before the first sample, confirm a dash on both visuals. Stop Wokwi and confirm stale last-known values with stopped fan animation; stop the bridge and confirm disconnected last-known values. Acknowledge, reset the app state, and confirm the next fresh reading becomes the session reference. Check reduced motion, larger text, and dark appearance.
 5. **Timed demo:** rehearse the presenter path in [mvp-requirements.md](mvp-requirements.md) with setup complete; it must finish in under two minutes.
 
 Passing lint or type checks is not proof of Android network delivery. Do not describe this prototype as physical sensor integration, the concept note's on-site/offline system, physical fan control, a validated alert rule, or a field-tested product.

@@ -10,23 +10,35 @@ This is a demonstration prototype, not a farm-monitoring product. Wokwi readings
 
 ## Implemented in this build
 
-- `mobile/src/app/index.tsx` and `mobile/src/app/house-1.tsx`: House 1 overview and detail screens. The overview presents temperature, humidity, simulated fan percentage, data status, and prompt state. The detail groups environmental readings, demo setpoint, simulated fan, inspection prompt, and local bridge setup into section boxes. Both preserve simulated-data labeling, larger-text layouts, and system light/dark appearance.
+- `mobile/src/app/index.tsx` and `mobile/src/app/house-1.tsx`: House 1 overview and detail screens. The overview presents temperature, humidity, simulated fan percentage, data status, and prompt state in a charcoal card with a decorative house line drawing. The detail presents a large temperature reading with temperature and humidity icons, then inspection, a combined app-only fan and vent panel, and local bridge setup. Both visuals follow the existing fan percentage and mark waiting, stale, and disconnected data. The fan drawing stops for stale/disconnected data and reduced motion. Both screens preserve simulated-data labeling, larger-text layouts, and system light/dark appearance.
 - `mobile/src/demo-session.tsx`: shared bridge polling and session state, so navigation retains readings, the reference sample, acknowledgement, recovery, and reset state.
-- `mobile/src/ui.tsx`: shared bright Poultri palette, unchanged supplied logo and wordmark, and common screen controls.
+- `mobile/src/ui.tsx`: shared light and dark palettes with warm neutral surfaces, charcoal and sage UI elements, a terracotta inspection state, unchanged logo and wordmark, and common screen controls.
 - `mobile/app.json` and `mobile/src/app/_layout.tsx`: support portrait and landscape, enable Android predictive Back, and configure the SDK-matched Expo System UI module for automatic appearance.
 - `mobile/plugins/with-local-bridge-http.js`: Expo config plugin for Android local-LAN HTTP in the preview APK.
 - `bridge/server.mjs`: dependency-free Node HTTP bridge on port 4174 with health, latest-reading, and input validation for sensor readings, setpoint, alert state, and fan percentage.
 - `wokwi/`: ESP32/DHT22/LED PlatformIO project, diagram, and firmware. The firmware samples every two seconds, compares temperature with the demo-only 25°C setpoint, drives the LED to 0/50/100%, and posts readings through Wokwi networking to the local bridge.
-- Demo features: open the House 1 overview, then enter the detail screen to connect to the local bridge and show simulated temperature/humidity, setpoint and fan percentage plus live/stale state; create one prompt at 25°C or above; acknowledge it, show recovery below 25°C, or reset the app session. The official logo and wordmark are included from the supplied image assets unchanged, and the root README displays them.
+- Demo features: open the House 1 overview, then enter the detail screen to connect to the local bridge and show simulated temperature/humidity, setpoint and fan percentage plus live/stale state; see a still/slower/faster fan drawing and closed/half-open/fully-open visual vent at 0/50/100% fan; create one prompt at 25°C or above; acknowledge it, show recovery below 25°C, or reset the app session. The official logo and wordmark are included from the supplied image assets unchanged, and the root README displays them.
 - The README uses `assets/poultri_full_logo.png` and documents the build, bridge, Wokwi, mobile, and repeat-demo steps plus the 24°C → 25°C → 27°C walkthrough.
 - `mvp-requirements.md`: scope, acceptance criteria, and the under-two-minute presenter flow.
 - `build-requirements.md`: mobile/Wokwi/bridge architecture, setup, data contract, run instructions, verification sequence, and a future AI-chatbot plan. Chat is documented for later and is not implemented in this demo.
 
-The supplied Poultri logo and wordmark are used as existing image assets without modification. No desktop simulator, account system, cloud broker, database, push notifications, camera, gas sensor, farm records, physical actuator, or AI service is included. The concept note defines no numeric temperature threshold or fan curve; 25°C and the LED levels are user-chosen demo settings. The proposed offline-operation, pilot, alert-timing, and detection targets remain future evaluation work.
+The supplied Poultri logo and wordmark are used as existing image assets without modification. No desktop simulator, account system, cloud broker, database, push notifications, camera, gas sensor, farm records, physical actuator, or AI service is included. The fan and vent are app-only drawings; no physical fan, vent, or servo is connected or controlled. The concept note defines no numeric temperature threshold or fan curve; 25°C and the LED levels are user-chosen demo settings. The proposed offline-operation, pilot, alert-timing, and detection targets remain future evaluation work.
 
 The generated Android project was refreshed from Expo config. Its manifest enables HTTP for the private-LAN bridge and removes old Firebase/notification metadata; Expo's permission-removal directives block unused storage, overlay, and vibration permissions from the final merged manifest.
 
-## Verification — 2026-10-19
+## Verification — 2026-10-21
+
+The visual redesign passed TypeScript, ESLint, and `git diff --check`. The Android emulator showed both screens with waiting and connected Wokwi data, the active inspection prompt, 100% fan, fully open vent, and the local bridge controls. Light and dark appearances were inspected; the app was returned to light appearance. A physical-phone Expo Go session and a new EAS APK build were not run for this visual change.
+
+## Verification — 2026-10-20
+
+For the new fan drawing, TypeScript, ESLint, and `git diff --check` passed using the bundled Node runtime. The running Android emulator was reloaded from Metro, reconnected to the local bridge, and visually showed the app-only fan drawing at a current 0% Wokwi reading alongside the closed vent. The 50/100% animation, stale/disconnected stop, reduced-motion appearance, physical-phone Expo Go session, and a new EAS APK build were not rerun for this change.
+
+The green-only color pass was reviewed on the Android emulator in light and dark appearance with a fresh Wokwi reading. Both screens retained their navigation and connected state. The logo and wordmark assets were not edited. ESLint, TypeScript, and `git diff --check` passed. This color pass did not rerun a physical-phone Expo Go session or build a new APK.
+
+The House 1 vent rendered its waiting dash on the Android emulator. With Wokwi-equivalent samples posted to the local bridge, 24.9°C/0% showed closed louvers, 25°C/50% showed half-open, and 27°C/100% showed fully open. When samples stopped, the retained 100% position was labeled last known and stale; after the bridge stopped, it was labeled disconnected. Larger text and dark appearance were readable. TypeScript, ESLint, and `git diff --check` passed; the existing EAS preview profile still targets an APK. This run used posted local bridge samples, not new Wokwi firmware or a physical vent. Expo Go on a physical phone, landscape, and a new EAS APK build were not rerun for this UI-only change.
+
+## Earlier verification — 2026-10-19
 
 - Passed on an Android emulator with the current Metro bundle: fresh launch opens the styled House 1 overview; tapping the card opens the boxed detail screen; Android Back returns to the overview without clearing the active reading or prompt.
 - Passed against an isolated copy of the local bridge: 24.9°C/0% fan and no prompt; 25.0°C/50% fan with an inspection prompt; 27.0°C/100% fan with acknowledgement retained; below 25°C/0% fan with the acknowledged prompt marked recovered; Reset Demo clears the prompt and reference, and the next fresh sample becomes the new reference.

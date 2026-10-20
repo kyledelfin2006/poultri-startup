@@ -1,6 +1,6 @@
 # Poultri mobile demo
 
-Expo / React Native TypeScript demo app for the Wokwi ESP32 + DHT22 simulation. It opens to a House 1 overview with temperature, humidity, simulated fan percentage, and connection/prompt state. Open House 1 to see the grouped readings, demo setpoint, inspection prompt, and local bridge connection controls. The app displays simulated readings and is not connected to physical sensors or farm validated.
+Expo / React Native TypeScript demo app for the Wokwi ESP32 + DHT22 simulation. It opens to a House 1 overview with temperature, humidity, simulated fan percentage, and connection/prompt state. The screens use a warm neutral canvas, charcoal cards, sage accents, and a terracotta inspection state; the supplied logo and wordmark are unchanged. Open House 1 to see the temperature and humidity icons, simulation setpoint, inspection prompt, combined app-only fan and vent panel, and local bridge connection controls. The fan drawing is still at 0% and spins at 50% or 100%; the vent follows the same percentage: closed, half-open, or fully open. Both show a dash while waiting and mark last-known values stale or disconnected. No physical fan, vent, or servo is connected or controlled. The house line drawing is decorative. The app displays simulated readings and is not connected to physical sensors or farm validated.
 
 See the root [MVP requirements](../mvp-requirements.md) and [build guide](../build-requirements.md) for the demo flow, network setup, and acceptance criteria.
 

@@ -26,8 +26,9 @@ The following concept capabilities remain outside this demo: camera or bird-move
 3. The mobile app shows the latest temperature, humidity, demo setpoint, simulated fan percentage, the source as **Wokwi simulated data**, and whether the connection is waiting, connected, stale, or disconnected. Humidity is display-only.
 4. The first valid reading after connecting or resetting is retained as session context. It does not set the alert threshold.
 5. The app creates one inspection prompt from the firmware alert state. The presenter can acknowledge it. When temperature falls below 25°C, show recovery while retaining the prompt until reset.
-6. **Reset Demo** clears the app's session reference and prompt. It does not change the Wokwi DHT22 value; lower the sensor below 25°C or restart Wokwi before beginning another alert run.
+6. **Reset session** clears the app's session reference and prompt. It does not change the Wokwi DHT22 value; lower the sensor below 25°C or restart Wokwi before beginning another alert run.
 7. The presenter can enter the laptop's local bridge URL in the app and connect before starting the timed walkthrough.
+8. House 1 detail shows an **app-only simulated fan drawing** and vent. The fan drawing is still at 0%, spins at 50% or 100%, and stops when data becomes stale or disconnected; reduced-motion settings keep it still. The vent follows the same Wokwi `fanSpeedPct`: closed at 0%, half-open at 50%, fully open at 100%. Before the first reading both show a dash; retained values are marked stale or disconnected. No physical fan, vent, or servo is connected or controlled.
 
 ## Two-minute presenter walkthrough
 
@@ -35,9 +36,9 @@ Complete setup before starting the timer: run the bridge, start Wokwi with its p
 
 | Time | Presenter action | What the audience sees |
 |---|---|---|
-| 0:00–0:20 | Show the connected app and steady 24°C Wokwi reading. | One demo house, temperature, humidity, 25°C demo setpoint, fan at 0%, and simulated-data labels. |
-| 0:20–0:45 | Raise temperature to 25°C using the Wokwi DHT22 control. | The app updates; the inspection prompt appears and the simulated fan shows 50%. |
-| 0:45–1:05 | Raise temperature to 27°C. | Wokwi LED brightness and app fan indicator show 100%. |
+| 0:00–0:20 | Show the connected app and steady 24°C Wokwi reading. | One demo house, temperature, humidity, 25°C demo setpoint, fan at 0%, closed app-only vent, and simulated-data labels. |
+| 0:20–0:45 | Raise temperature to 25°C using the Wokwi DHT22 control. | The app updates; the inspection prompt appears, the simulated fan shows 50%, and the visual vent is half-open. |
+| 0:45–1:05 | Raise temperature to 27°C. | Wokwi LED brightness and app fan indicator show 100%; the visual vent is fully open. |
 | 1:05–1:25 | Acknowledge the prompt, then lower temperature below 25°C. | The prompt shows acknowledged and recovered; it remains visible. |
 | 1:25–1:45 | Reset the app demo. | The prompt and session reference clear. |
 | 1:45–2:00 | State the prototype boundary. | Wokwi simulation only; the LED represents a fan, and no real sensors, camera analysis, diagnosis, physical controls, SMS, or farm validation are included. |
@@ -45,7 +46,7 @@ Complete setup before starting the timer: run the bridge, start Wokwi with its p
 ## Out of scope
 
 - Multiple houses, farm profiles, production records, accounts, or cloud data storage.
-- Cameras, bird-activity classification, ammonia/CO₂ measurement, SMS, and physical fan or temperature-control commands.
+- Cameras, bird-activity classification, ammonia/CO₂ measurement, SMS, and physical fan, vent, servo, or temperature-control commands.
 - Clinical or husbandry advice, validated safety thresholds, farm compatibility claims, offline-duration claims, or measured farm outcomes.
 - Production security, multi-user access, internet deployment, and remote monitoring.
 
@@ -54,8 +55,8 @@ The Wokwi MQ-2 part is a combustible-gas model and must not be presented as an a
 ## Success criteria
 
 - The presenter can change the Wokwi DHT22 input and see the app update over the local connection.
-- A reading below 25°C shows no prompt and 0% fan; 25°C shows one prompt and 50%; 27°C shows 100%; falling below 25°C shows recovery. Acknowledgement and reset behave as described.
-- Disconnection and stale data are labeled so old readings are not mistaken for current readings.
+- A reading below 25°C shows no prompt, 0% fan, and closed visual vent; 25°C shows one prompt, 50% fan, and half-open vent; 27°C shows 100% fan and fully open vent; falling below 25°C shows recovery. Acknowledgement and reset behave as described.
+- Disconnection and stale data are labeled so old readings and last-known fan and vent states are not mistaken for current readings. Before any reading, both drawings show a dash.
 - A prepared presenter completes the walkthrough within two minutes without implying that simulated readings are live farm data.
 
 For architecture, the bridge contract, implementation order, and technical checks, see [build-requirements.md](build-requirements.md).

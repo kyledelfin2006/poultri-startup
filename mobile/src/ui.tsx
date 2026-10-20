@@ -11,50 +11,62 @@ export type Palette = {
   forest: string;
   greenText: string;
   lime: string;
-  yellow: string;
-  red: string;
-  redSurface: string;
+  alertSurface: string;
   greenSurface: string;
   inputBorder: string;
   onForest: string;
+  onForestMuted: string;
+  onForestAccent: string;
+  forestRaised: string;
+  forestLine: string;
+  warningSurface: string;
+  warningInk: string;
 };
 
 const lightPalette: Palette = {
-  background: '#F5F8F1',
-  surface: '#FFFFFF',
-  ink: '#173C28',
-  body: '#344B3B',
-  muted: '#596B5E',
-  quiet: '#6B7A6F',
-  border: '#D9E3D8',
-  forest: '#064B2D',
-  greenText: '#064B2D',
-  lime: '#8DDC2F',
-  yellow: '#FFD34C',
-  red: '#B83228',
-  redSurface: '#FFF0ED',
-  greenSurface: '#EAF6E7',
-  inputBorder: '#B6C7B8',
-  onForest: '#FFFFFF',
+  background: '#F2F0E9',
+  surface: '#F2F0E9',
+  ink: '#1C2B26',
+  body: '#263630',
+  muted: '#64766B',
+  quiet: '#75877A',
+  border: '#C8D0C4',
+  forest: '#263630',
+  greenText: '#355B45',
+  lime: '#A9CE83',
+  alertSurface: '#EBC9B0',
+  greenSurface: '#D8E5D2',
+  inputBorder: '#A7B9A8',
+  onForest: '#F5F7EF',
+  onForestMuted: '#D0DED0',
+  onForestAccent: '#B8DB91',
+  forestRaised: '#405E49',
+  forestLine: '#657B6A',
+  warningSurface: '#EBC9B0',
+  warningInk: '#693D31',
 };
 
 const darkPalette: Palette = {
-  background: '#111A14',
-  surface: '#1A261E',
-  ink: '#F0F6EF',
-  body: '#D5E1D6',
-  muted: '#B9C9BC',
-  quiet: '#A8B9AA',
-  border: '#35463A',
-  forest: '#064B2D',
-  greenText: '#A5EB50',
-  lime: '#A5EB50',
-  yellow: '#FFD34C',
-  red: '#FF887A',
-  redSurface: '#3A211E',
-  greenSurface: '#1D3524',
-  inputBorder: '#536659',
-  onForest: '#FFFFFF',
+  background: '#18241E',
+  surface: '#24342B',
+  ink: '#F4F5ED',
+  body: '#E5EBDD',
+  muted: '#B8CAB6',
+  quiet: '#A8BBA9',
+  border: '#526659',
+  forest: '#263630',
+  greenText: '#C4DFA9',
+  lime: '#A9CE83',
+  alertSurface: '#5D4035',
+  greenSurface: '#344B3A',
+  inputBorder: '#718675',
+  onForest: '#F5F7EF',
+  onForestMuted: '#D0DED0',
+  onForestAccent: '#B8DB91',
+  forestRaised: '#405E49',
+  forestLine: '#657B6A',
+  warningSurface: '#5D4035',
+  warningInk: '#FFE0CB',
 };
 
 export function usePalette() {
@@ -63,7 +75,7 @@ export function usePalette() {
 
 export function BrandHeader({ palette }: { palette: Palette }) {
   return (
-    <View style={[styles.brand, { backgroundColor: '#FFFFFF', borderColor: palette.border }]}>
+    <View style={[styles.brand, { backgroundColor: palette.background === lightPalette.background ? 'transparent' : lightPalette.background }]}>
       <Image
         source={require('../assets/poultri-logo.png')}
         style={styles.logo}
@@ -78,6 +90,10 @@ export function BrandHeader({ palette }: { palette: Palette }) {
       />
     </View>
   );
+}
+
+export function MetricIcon({ kind, color }: { kind: 'temperature' | 'humidity'; color: string }) {
+  return <Image source={kind === 'temperature' ? require('../assets/temperature-icon.png') : require('../assets/humidity-icon.png')} style={[styles.metricIcon, { tintColor: color }]} resizeMode="contain" accessible={false} />;
 }
 
 export function ActionButton({
@@ -96,16 +112,16 @@ export function ActionButton({
   const componentStyles = StyleSheet.create({
     button: {
       minHeight: 50,
-      borderRadius: 12,
+      borderRadius: 9,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 18,
-      backgroundColor: palette.forest,
+      backgroundColor: secondary ? 'transparent' : palette.forest,
       borderWidth: secondary ? 1 : 0,
-      borderColor: palette.border,
+      borderColor: palette.inputBorder,
       opacity: disabled ? 0.5 : 1,
     },
-    text: { color: secondary ? palette.ink : palette.onForest, fontSize: 15, fontWeight: '700' as const },
+    text: { color: secondary ? palette.greenText : palette.onForest, fontSize: 15, fontWeight: '700' as const },
   });
 
   return (
@@ -114,7 +130,7 @@ export function ActionButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [componentStyles.button, secondary && { backgroundColor: palette.surface }, pressed && !disabled && { opacity: 0.78 }]}
+      style={({ pressed }) => [componentStyles.button, pressed && !disabled && { opacity: 0.78 }]}
     >
       <Text style={componentStyles.text}>{title}</Text>
     </Pressable>
@@ -130,12 +146,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 9,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderRadius: 12,
+    gap: 8,
+    minHeight: 48,
+    borderRadius: 8,
   },
   logo: { width: 38, height: 38 },
-  wordmark: { width: 136, height: 46 },
+  wordmark: { width: 112, height: 42 },
+  metricIcon: { width: 16, height: 16 },
 });
