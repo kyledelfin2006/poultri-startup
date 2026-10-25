@@ -1,4 +1,4 @@
-# Poultri Wokwi + Mobile Demo
+# Poultri 
 
 <p align="center">
   <img src="assets/poultri_full_logo.png" alt="Official Poultri full logo" width="190" />
