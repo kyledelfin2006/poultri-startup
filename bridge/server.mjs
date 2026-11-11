@@ -9,6 +9,8 @@ function json(response, status, value) {
   response.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    // Web preview runs on another origin; the bridge is local-only, so any origin may read it.
+    'access-control-allow-origin': '*',
   });
   response.end(JSON.stringify(value));
 }
@@ -46,6 +48,16 @@ function readJson(request) {
 
 async function route(request, response) {
   const url = new URL(request.url ?? '/', 'http://localhost');
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+    });
+    response.end();
+    return;
+  }
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     json(response, 200, { ok: true });

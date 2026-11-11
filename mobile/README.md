@@ -17,6 +17,16 @@ Scan the QR code with Expo Go. Keep the development server running while using t
 
 Open the **House 1** overview card, then enter the laptop's private Wi-Fi IPv4 URL with port `4174` on the detail screen (for example, `http://192.168.1.20:4174`) and tap **Connect to bridge**. Keep the phone and laptop on the same Wi-Fi. Wokwi must be running and posting samples to the bridge. See the root [build guide](../build-requirements.md) for complete setup.
 
+## Preview in a browser
+
+For quick UI edits on the laptop, run the web build:
+
+```powershell
+npx.cmd expo start --web
+```
+
+Open http://localhost:8081, open **House 1**, and enter `http://localhost:4174` as the bridge URL. The bridge allows cross-origin requests so the browser can reach it. The browser preview is for UI work only; use Expo Go, the emulator, or the APK for the demo.
+
 ## Build an Android APK
 
 The EAS `preview` profile creates an installable APK. Sign in, then start a build from this directory:
