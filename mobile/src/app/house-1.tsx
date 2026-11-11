@@ -2,18 +2,17 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   AccessibilityInfo,
-  ActivityIndicator,
   Animated,
   Easing,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BridgeConnectionFields } from '../bridge-connection';
 import { useDemoSession } from '../demo-session';
 import { ActionButton, BrandHeader, MetricIcon, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
 
@@ -24,9 +23,8 @@ export default function HouseDetailScreen() {
   const compact = width < 370 || fontScale >= 1.3;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const {
-    bridgeUrl, setBridgeUrl, connected, connecting, message, reading, baseline,
-    alertRecord, sampleAgeMs, stale, status, statusDescription, connect,
-    acknowledge, resetDemo,
+    connected, reading, baseline, alertRecord, sampleAgeMs, stale, status,
+    statusDescription, acknowledge, resetDemo,
   } = useDemoSession();
   const fanSpeedPct = reading?.fanSpeedPct;
   const statusWarning = stale || status.startsWith('Disconnected');
@@ -206,29 +204,7 @@ export default function HouseDetailScreen() {
 
         <View style={styles.connectionSection}>
           <Text style={styles.sectionTitle}>Connection</Text>
-          <Text style={styles.inputLabel}>Bridge URL</Text>
-          <TextInput
-            accessibilityLabel="Laptop bridge URL"
-            accessibilityHint="Enter the laptop's local bridge URL."
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            onChangeText={setBridgeUrl}
-            placeholder="http://<laptop-LAN-IP>:4174"
-            placeholderTextColor={palette.quiet}
-            style={styles.input}
-            value={bridgeUrl}
-          />
-          <ActionButton title={connecting ? 'Connecting…' : connected ? 'Reconnect' : 'Connect to bridge'} onPress={() => void connect()} palette={palette} disabled={connecting} />
-          {connecting && <ActivityIndicator color={palette.greenText} />}
-          {!!message && !connecting && (
-            <View style={styles.connectionMessage}>
-              <View style={[styles.connectionDot, statusWarning && styles.connectionDotWarning]} />
-              <Text style={[styles.message, statusWarning && styles.messageWarning]}>
-                {status === 'Not connected' ? 'Enter the laptop bridge URL, then connect.' : reading && message === 'Connected. Waiting for a fresh Wokwi reading.' ? 'Connected to the local bridge.' : message}
-              </Text>
-            </View>
-          )}
+          <BridgeConnectionFields palette={palette} />
           <View style={styles.reset}><ActionButton title="Reset session" onPress={resetDemo} palette={palette} secondary /></View>
         </View>
       </ScrollView>
@@ -310,11 +286,6 @@ function createStyles(colors: Palette) {
     airflowNote: { ...text.caption, color: colors.muted },
     airflowDataState: { ...text.caption, color: colors.greenText, marginTop: spacing.xs },
     connectionSection: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: spacing.xxl, paddingTop: spacing.xxl, gap: spacing.md },
-    inputLabel: { ...text.label, color: colors.ink, marginTop: spacing.xs },
-    input: { ...text.body, minHeight: 48, borderColor: colors.inputBorder, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: spacing.md, backgroundColor: colors.greenSurface, color: colors.ink },
-    connectionMessage: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-    message: { ...text.caption, color: colors.greenText, flex: 1 },
-    messageWarning: { color: colors.warningInk },
     reset: { marginTop: spacing.lg },
   });
 }

@@ -21,9 +21,27 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
-        <BrandHeader palette={palette} />
+        <View style={styles.topBar}>
+          <BrandHeader palette={palette} />
+          <Pressable
+            onPress={() => router.push('/settings')}
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            accessibilityHint="Opens the bridge connection settings."
+            style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+          >
+            {/* Sliders icon drawn with views; an icon package needs approval (agents.md). */}
+            <View style={styles.slidersIcon} accessible={false}>
+              {[5, 13, 8].map((knobLeft) => (
+                <View key={knobLeft} style={styles.sliderTrack}>
+                  <View style={[styles.sliderKnob, { left: knobLeft }]} />
+                </View>
+              ))}
+            </View>
+          </Pressable>
+        </View>
         <View style={styles.heading}>
-          <Text accessibilityRole="header" style={styles.title}>Overview</Text>
+          <Text accessibilityRole="header" style={styles.title}>House overview</Text>
           <View style={styles.sourceRow}>
             <View style={styles.sourceDot} />
             <Text style={styles.sourceText}>Wokwi simulated data</Text>
@@ -97,6 +115,12 @@ function createStyles(colors: Palette) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
     content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
+    topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+    settingsButton: { width: 44, height: 44, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+    settingsButtonPressed: { backgroundColor: colors.greenSurface },
+    slidersIcon: { width: 20, height: 18, justifyContent: 'space-between' },
+    sliderTrack: { height: 2, borderRadius: radius.pill, backgroundColor: colors.ink, justifyContent: 'center' },
+    sliderKnob: { position: 'absolute', width: 6, height: 6, marginTop: -2, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface },
     heading: { marginTop: spacing.xl, marginBottom: spacing.xl, gap: spacing.xs },
     title: { ...text.title, color: colors.ink },
     sourceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
