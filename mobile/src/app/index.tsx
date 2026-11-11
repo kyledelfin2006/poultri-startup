@@ -15,6 +15,7 @@ export default function HomeScreen() {
   const { reading, samples, alertRecord, status, sampleAgeMs, stale } = useDemoSession();
   // App-only vent state; follows the simulated fan percentage, as on House 1.
   const fan = reading?.fanSpeedPct;
+  const setpointC = reading?.setpointC ?? 25; // firmware's demo setpoint; same fallback as House 1
   const ventState = fan === undefined ? '—' : fan === 0 ? 'Closed' : fan === 50 ? 'Half-open' : fan === 100 ? 'Open' : 'Partly open';
   const needsAttention = !!alertRecord && !alertRecord.recovered;
   const statusWarning = stale || status.startsWith('Disconnected');
@@ -71,8 +72,19 @@ export default function HomeScreen() {
           </Text>
           <Text style={styles.metricLabel}>Current temperature</Text>
           <View style={styles.trend}>
-            <TrendLine values={samples} palette={palette} />
-            {samples.length >= 2 && <Text style={styles.metricLabel}>Since connecting</Text>}
+            <TrendLine values={samples} palette={palette} setpoint={setpointC} />
+            {samples.length >= 2 && (
+              <View style={styles.trendLegend}>
+                <Text style={styles.metricLabel}>Since connecting</Text>
+                <View style={styles.setpointLegend}>
+                  <View style={styles.legendDashes}>
+                    <View style={styles.legendDash} />
+                    <View style={styles.legendDash} />
+                  </View>
+                  <Text style={styles.metricLabel}>Demo setpoint {+setpointC.toFixed(1)}°C</Text>
+                </View>
+              </View>
+            )}
           </View>
           <View style={styles.cardDivider} />
           <View style={styles.secondaryMetrics}>
@@ -138,6 +150,10 @@ function createStyles(colors: Palette) {
     statusText: { ...text.label, color: colors.ink },
     statusTextWarning: { color: colors.warningInk },
     trend: { marginTop: spacing.lg, marginBottom: spacing.lg, gap: spacing.xs },
+    trendLegend: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
+    setpointLegend: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    legendDashes: { flexDirection: 'row', gap: spacing.xs },
+    legendDash: { width: 4, height: 1, backgroundColor: colors.muted },
     temperature: { ...text.display, color: colors.ink },
     temperatureCompact: displayCompact,
     temperatureUnit: { ...text.title, color: colors.greenText },
