@@ -1,4 +1,18 @@
-import { Image, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, useColorScheme, type TextStyle } from 'react-native';
+
+// Type scale. System font only: no rounded/geometric sans ships with expo-font here,
+// and adding a font package needs approval (agents.md). Colors stay at the call site.
+export const text = {
+  display: { fontSize: 72, lineHeight: 84, fontWeight: '800', letterSpacing: -2.5, fontVariant: ['tabular-nums'] },
+  title: { fontSize: 34, lineHeight: 40, fontWeight: '800', letterSpacing: -1 },
+  heading: { fontSize: 20, lineHeight: 26, fontWeight: '800' },
+  body: { fontSize: 16, lineHeight: 22, fontWeight: '400' },
+  label: { fontSize: 12, lineHeight: 16, fontWeight: '700', letterSpacing: 0.2 },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
+} satisfies Record<string, TextStyle>;
+
+// Display on narrow screens or large font scale.
+export const displayCompact: TextStyle = { fontSize: 56, lineHeight: 66 };
 
 export type Palette = {
   background: string;
