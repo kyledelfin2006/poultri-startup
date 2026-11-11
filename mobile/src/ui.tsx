@@ -11,6 +11,8 @@ export type Palette = {
   forest: string;
   greenText: string;
   lime: string;
+  primary: string;
+  onPrimary: string;
   alertSurface: string;
   greenSurface: string;
   inputBorder: string;
@@ -23,50 +25,55 @@ export type Palette = {
   warningInk: string;
 };
 
+// Every text/background pair used by the screens is ≥4.5:1; outlines (inputBorder) are ≥3:1.
 const lightPalette: Palette = {
-  background: '#F2F0E9',
-  surface: '#F2F0E9',
-  ink: '#1C2B26',
-  body: '#263630',
-  muted: '#64766B',
-  quiet: '#75877A',
-  border: '#C8D0C4',
-  forest: '#263630',
-  greenText: '#355B45',
-  lime: '#A9CE83',
-  alertSurface: '#EBC9B0',
-  greenSurface: '#D8E5D2',
-  inputBorder: '#A7B9A8',
-  onForest: '#F5F7EF',
-  onForestMuted: '#D0DED0',
-  onForestAccent: '#B8DB91',
-  forestRaised: '#405E49',
-  forestLine: '#657B6A',
-  warningSurface: '#EBC9B0',
-  warningInk: '#693D31',
+  background: '#EEF4E7', // pale sage page
+  surface: '#FFFFFF', // cards
+  ink: '#0F2E1F', // deep green: headings, key numbers
+  body: '#1F3F2E',
+  muted: '#3E5E4B', // mid green: secondary text
+  quiet: '#4A6B57', // placeholders
+  border: '#C9D8BE',
+  forest: '#0F2E1F',
+  greenText: '#2C5E3B',
+  lime: '#B5E04A',
+  primary: '#B5E04A', // lime primary action
+  onPrimary: '#0F2E1F',
+  alertSurface: '#F7DCCB',
+  greenSurface: '#DDEBCF',
+  inputBorder: '#6B8771',
+  onForest: '#F4F8EE',
+  onForestMuted: '#BFD3C2',
+  onForestAccent: '#B5E04A',
+  forestRaised: '#24503A',
+  forestLine: '#3C5F4A',
+  warningSurface: '#F7DCCB',
+  warningInk: '#7A3720',
 };
 
 const darkPalette: Palette = {
-  background: '#18241E',
-  surface: '#24342B',
-  ink: '#F4F5ED',
-  body: '#E5EBDD',
-  muted: '#B8CAB6',
-  quiet: '#A8BBA9',
-  border: '#526659',
-  forest: '#263630',
-  greenText: '#C4DFA9',
-  lime: '#A9CE83',
-  alertSurface: '#5D4035',
-  greenSurface: '#344B3A',
-  inputBorder: '#718675',
-  onForest: '#F5F7EF',
-  onForestMuted: '#D0DED0',
-  onForestAccent: '#B8DB91',
-  forestRaised: '#405E49',
-  forestLine: '#657B6A',
-  warningSurface: '#5D4035',
-  warningInk: '#FFE0CB',
+  background: '#0E1A13',
+  surface: '#17271E',
+  ink: '#EEF5E6',
+  body: '#D6E3CE',
+  muted: '#A9C0A8',
+  quiet: '#9DB59D',
+  border: '#2E4537',
+  forest: '#1A3024',
+  greenText: '#B5E04A',
+  lime: '#B5E04A',
+  primary: '#B5E04A',
+  onPrimary: '#0F2E1F',
+  alertSurface: '#4A2A1F',
+  greenSurface: '#223829',
+  inputBorder: '#6A8572',
+  onForest: '#F4F8EE',
+  onForestMuted: '#C2D4C3',
+  onForestAccent: '#B5E04A',
+  forestRaised: '#2C4D39',
+  forestLine: '#3E5C49',
+  warningSurface: '#4A2A1F',
+  warningInk: '#FFD9C4',
 };
 
 export function usePalette() {
