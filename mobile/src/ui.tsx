@@ -23,6 +23,8 @@ export type Palette = {
   forestLine: string;
   warningSurface: string;
   warningInk: string;
+  alertAction: string; // Acknowledge button fill
+  onAlertAction: string;
 };
 
 // Every text/background pair used by the screens is ≥4.5:1; outlines (inputBorder) are ≥3:1.
@@ -49,6 +51,8 @@ const lightPalette: Palette = {
   forestLine: '#3C5F4A',
   warningSurface: '#F7DCCB',
   warningInk: '#7A3720',
+  alertAction: '#573B31',
+  onAlertAction: '#FFF6ED',
 };
 
 const darkPalette: Palette = {
@@ -74,6 +78,8 @@ const darkPalette: Palette = {
   forestLine: '#3E5C49',
   warningSurface: '#4A2A1F',
   warningInk: '#FFD9C4',
+  alertAction: '#573B31',
+  onAlertAction: '#FFF6ED',
 };
 
 export function usePalette() {
