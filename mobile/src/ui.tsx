@@ -13,6 +13,9 @@ export const text = {
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
+// Two radii only: cards and panels, or pills/buttons/circles.
+export const radius = { card: 16, pill: 999 } as const;
+
 // Display on narrow screens or large font scale.
 export const displayCompact: TextStyle = { fontSize: 56, lineHeight: 66 };
 
@@ -33,10 +36,6 @@ export type Palette = {
   greenSurface: string;
   inputBorder: string;
   onForest: string;
-  onForestMuted: string;
-  onForestAccent: string;
-  forestRaised: string;
-  forestLine: string;
   warningSurface: string;
   warningInk: string;
   alertAction: string; // Acknowledge button fill
@@ -61,10 +60,6 @@ const lightPalette: Palette = {
   greenSurface: '#DDEBCF',
   inputBorder: '#6B8771',
   onForest: '#F4F8EE',
-  onForestMuted: '#BFD3C2',
-  onForestAccent: '#B5E04A',
-  forestRaised: '#24503A',
-  forestLine: '#3C5F4A',
   warningSurface: '#F7DCCB',
   warningInk: '#7A3720',
   alertAction: '#573B31',
@@ -88,10 +83,6 @@ const darkPalette: Palette = {
   greenSurface: '#223829',
   inputBorder: '#6A8572',
   onForest: '#F4F8EE',
-  onForestMuted: '#C2D4C3',
-  onForestAccent: '#B5E04A',
-  forestRaised: '#2C4D39',
-  forestLine: '#3E5C49',
   warningSurface: '#4A2A1F',
   warningInk: '#FFD9C4',
   alertAction: '#573B31',
@@ -141,7 +132,7 @@ export function ActionButton({
   const componentStyles = StyleSheet.create({
     button: {
       minHeight: 50,
-      borderRadius: 9,
+      borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 18,
@@ -177,7 +168,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: 8,
     minHeight: 48,
-    borderRadius: 8,
+    borderRadius: radius.card,
   },
   logo: { width: 38, height: 38 },
   wordmark: { width: 112, height: 42 },
