@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDemoSession } from '../demo-session';
-import { BrandHeader, MetricIcon, Palette, displayCompact, text, usePalette } from '../ui';
+import { BrandHeader, MetricIcon, Palette, displayCompact, spacing, text, usePalette } from '../ui';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -96,20 +96,20 @@ export default function HomeScreen() {
 function createStyles(colors: Palette) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
-    content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: 22, paddingTop: 19, paddingBottom: 36 },
-    heading: { marginTop: 26, marginBottom: 24, gap: 6 },
+    content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
+    heading: { marginTop: spacing.xl, marginBottom: spacing.xl, gap: spacing.xs },
     title: { ...text.title, color: colors.ink },
-    sourceRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+    sourceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     sourceDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.greenText },
     sourceText: { ...text.label, color: colors.greenText },
-    houseCard: { position: 'relative', overflow: 'hidden', backgroundColor: colors.forest, borderRadius: 20, padding: 22 },
+    houseCard: { position: 'relative', overflow: 'hidden', backgroundColor: colors.forest, borderRadius: 20, padding: spacing.xl },
     pressed: { opacity: 0.84 },
     houseArt: { position: 'absolute', width: 118, height: 82, right: 21, top: 43, tintColor: colors.onForestAccent, opacity: 0.38 },
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     houseTitle: { ...text.heading, color: colors.onForest },
     openCircle: { width: 35, height: 35, borderWidth: 1, borderColor: colors.onForestAccent, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
     openCircleArrow: { ...text.heading, fontWeight: '400', color: colors.onForestAccent },
-    statusPill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, marginTop: 12, minHeight: 30, paddingHorizontal: 10, borderRadius: 16, backgroundColor: colors.forestRaised },
+    statusPill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: spacing.sm, marginTop: spacing.md, minHeight: 30, paddingHorizontal: spacing.sm, borderRadius: 16, backgroundColor: colors.forestRaised },
     statusPillWarning: { backgroundColor: colors.warningSurface },
     statusDot: { width: 7, height: 7, borderRadius: 4 },
     liveDot: { backgroundColor: colors.onForest },
@@ -117,32 +117,32 @@ function createStyles(colors: Palette) {
     warningDot: { backgroundColor: colors.warningInk },
     statusText: { ...text.label, color: colors.onForest },
     statusTextWarning: { color: colors.warningInk },
-    primaryMetric: { marginTop: 38, marginBottom: 20 },
+    primaryMetric: { marginTop: spacing.xxl, marginBottom: spacing.lg },
     temperature: { ...text.display, color: colors.onForest },
     temperatureCompact: displayCompact,
     temperatureUnit: { ...text.title, color: colors.onForestAccent },
-    metricLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    metricLabelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     metricLabel: { ...text.caption, color: colors.onForestMuted },
     cardDivider: { height: 1, backgroundColor: colors.forestLine },
-    secondaryMetrics: { flexDirection: 'row', paddingVertical: 17, gap: 17 },
-    secondaryMetric: { flex: 1, minWidth: 0, gap: 7 },
+    secondaryMetrics: { flexDirection: 'row', paddingVertical: spacing.lg, gap: spacing.lg },
+    secondaryMetric: { flex: 1, minWidth: 0, gap: spacing.sm },
     verticalDivider: { width: 1, backgroundColor: colors.forestLine },
     metricValue: { ...text.heading, color: colors.onForest, fontVariant: ['tabular-nums'] },
-    lastKnown: { ...text.caption, color: colors.onForestMuted, marginBottom: 13 },
-    cardFooter: { borderTopWidth: 1, borderTopColor: colors.forestLine, paddingTop: 17, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    lastKnown: { ...text.caption, color: colors.onForestMuted, marginBottom: spacing.md },
+    cardFooter: { borderTopWidth: 1, borderTopColor: colors.forestLine, paddingTop: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     openLabel: { ...text.body, fontWeight: '800', color: colors.onForestAccent },
     openArrow: { ...text.heading, fontWeight: '400', color: colors.onForestAccent },
-    inspection: { marginTop: 35 },
-    sectionTitle: { ...text.heading, color: colors.ink, marginBottom: 15 },
+    inspection: { marginTop: spacing.xxl },
+    sectionTitle: { ...text.heading, color: colors.ink, marginBottom: spacing.lg },
     inspectionRule: { height: 1, backgroundColor: colors.border },
-    inspectionRow: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 12 },
-    inspectionRowAlert: { backgroundColor: colors.alertSurface, paddingHorizontal: 12, borderRadius: 10, marginVertical: 9 },
+    inspectionRow: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    inspectionRowAlert: { backgroundColor: colors.alertSurface, paddingHorizontal: spacing.md, borderRadius: 10, marginVertical: spacing.sm },
     inspectionIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSurface },
     inspectionIconAlert: { backgroundColor: colors.warningInk },
     inspectionGlyph: { ...text.body, fontWeight: '700', color: colors.greenText },
     inspectionGlyphAlert: { color: colors.alertSurface },
     inspectionText: { ...text.body, fontWeight: '700', color: colors.ink, flexShrink: 1 },
     inspectionTextAlert: { color: colors.warningInk },
-    inspectionNote: { ...text.caption, color: colors.muted, marginBottom: 11 },
+    inspectionNote: { ...text.caption, color: colors.muted, marginBottom: spacing.md },
   });
 }
