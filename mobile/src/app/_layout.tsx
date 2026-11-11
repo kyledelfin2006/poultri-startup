@@ -14,6 +14,7 @@ export default function RootLayout() {
         <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="house-1" />
+          <Stack.Screen name="bridge-setup" />
         </Stack>
       </DemoProvider>
     </SafeAreaProvider>

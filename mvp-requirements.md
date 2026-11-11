@@ -1,18 +1,18 @@
-# Poultri Wokwi + Mobile Demo MVP
+# Poultri Sensor + Mobile Demo MVP
 
 ## Purpose
 
-Define a small prototype that lets a presenter change a simulated poultry-house reading in Wokwi and show the resulting inspection prompt in the Poultri mobile app. The complete presenter walkthrough must take less than two minutes once setup is complete.
+Define a small prototype that sends one local ESP32/DHT22 temperature and humidity reading through the laptop bridge to the Poultri mobile app. At the user-selected 32°C threshold, the physical ESP32 switches the fan relay and the app raises its inspection prompt; Wokwi mirrors the same threshold in its simulated fan indicator. The complete presenter walkthrough must take less than two minutes once setup is complete.
 
 This is a demonstration of a proposed workflow. It is not a farm monitoring system, field trial, or validated alert product.
 
 ## Alignment with the Poultri concept note
 
-The supplied concept note is the source of truth for Poultri's product intent. This MVP demonstrates only its staff-review workflow: one simulated house, temperature and humidity readings, and a mobile inspection prompt that can be acknowledged and reset.
+The supplied concept note is the source of truth for Poultri's product intent. This MVP demonstrates only its staff-review workflow: one demo house, temperature and humidity readings from a local DHT22 or Wokwi simulation, and a mobile inspection prompt that can be acknowledged and reset.
 
-The concept note does not set a numerical temperature threshold or fan-control rule. This demo uses a **25°C setpoint** and a **0/50/100% LED fan indicator** as user-chosen demonstration behavior only; neither is a farm setting or poultry-health limit.
+The concept note does not set a numerical temperature threshold or fan-control rule. This demo uses one **32°C inspection and fan-relay threshold** as user-chosen demonstration behavior only; it is not a farm setting or poultry-health limit. The physical ESP32 reports the relay command to the app as ON/OFF. Wokwi's LED follows the same threshold as a simulated fan indicator; it does not control a physical fan.
 
-The following concept capabilities remain outside this demo: camera or bird-movement analysis; ammonia/CO₂ sensors; production records; multiple houses; on-site edge processing and internet-independent operation; real fan/temperature controls; and SMS. The concept note's proposed alert timing, detection rate, offline duration, and field-trial duration are future evaluation targets, not results or acceptance criteria for this prototype.
+The following concept capabilities remain outside this demo: camera or bird-movement analysis; ammonia/CO₂ sensors; production records; multiple houses; on-site edge processing and internet-independent operation; validated farm control strategies; and SMS. The concept note's proposed alert timing, detection rate, offline duration, and field-trial duration are future evaluation targets, not results or acceptance criteria for this prototype.
 
 ## Audience and user
 
@@ -21,32 +21,32 @@ The following concept capabilities remain outside this demo: camera or bird-move
 
 ## Functional requirements
 
-1. Wokwi simulates one ESP32, one DHT22, and one PWM LED labeled as a simulated fan. The presenter can change temperature and humidity while simulation is running.
-2. The ESP32 marks the alert active at **25°C or higher** and drives the LED as a visual fan indicator: **0% below 25°C, 50% from 25°C to below 27°C, and 100% at or above 27°C**. These are demo values only; the LED is not a physical fan.
-3. The mobile app shows the latest temperature, humidity, demo setpoint, simulated fan percentage, the source as **Wokwi simulated data**, and whether the connection is waiting, connected, stale, or disconnected. Humidity is display-only.
+1. A physical ESP32 reads one DHT22 on GPIO 4 and sends samples over the local Wi-Fi network to the laptop bridge. Wokwi's simulated ESP32/DHT22 remains an alternate source for repeatable threshold demonstrations.
+2. The inspection prompt and fan output share the **32°C threshold**: at or above 32°C the app prompt is active and the physical ESP32 turns its GPIO 26 relay ON; below 32°C the prompt is clear and the relay is OFF. Wokwi mirrors this as a 0%/100% simulated fan indicator.
+3. The mobile app shows the latest temperature, humidity, source label (**Local ESP32 + DHT22** or **Wokwi simulated data**), and whether the connection is waiting, connected, stale, or disconnected. The setpoint remains part of the demo inspection logic but its numeric value and setpoint-specific explanation are not shown on Home or House 1 detail. For physical samples the app shows the ESP32 fan-relay command as ON/OFF; for Wokwi it shows the simulated percentage. The app does not send actuator commands or measure fan rotation. Humidity is display-only.
 4. The first valid reading after connecting or resetting is retained as session context. It does not set the alert threshold.
-5. The app creates one inspection prompt from the firmware alert state. The presenter can acknowledge it. When temperature falls below 25°C, show recovery while retaining the prompt until reset.
-6. **Reset session** clears the app's session reference and prompt. It does not change the Wokwi DHT22 value; lower the sensor below 25°C or restart Wokwi before beginning another alert run.
+5. The app creates one inspection prompt from the firmware alert state. Acknowledging it shows **ACKNOWLEDGED** for 60 seconds. At expiry, clear the prompt if a fresh reading is below 32°C; if the alert is still active, return to **INSPECT**. A recovered but unacknowledged prompt shows **RECOVERED** and remains until reset.
+6. **Reset session** clears the app's session reference and prompt. It does not change the physical or simulated sensor value; the next fresh reading becomes the reference.
 7. The presenter can enter the laptop's local bridge URL in the app and connect before starting the timed walkthrough.
-8. House 1 detail shows an **app-only simulated fan drawing** and vent. The fan drawing is still at 0%, spins at 50% or 100%, and stops when data becomes stale or disconnected; reduced-motion settings keep it still. The vent follows the same Wokwi `fanSpeedPct`: closed at 0%, half-open at 50%, fully open at 100%. Before the first reading both show a dash; retained values are marked stale or disconnected. No physical fan, vent, or servo is connected or controlled.
+8. House 1 detail shows the reported physical relay command for ESP32 samples and the simulated fan percentage for Wokwi samples. The fan drawing follows that state and stops when data becomes stale or disconnected; reduced-motion settings keep it still. The vent remains an app-only visual. Before the first reading visuals show a dash; retained states are marked stale or disconnected. The ESP32 controls only the fan relay; the app does not control the relay or verify that the fan is physically spinning.
 
 ## Two-minute presenter walkthrough
 
-Complete setup before starting the timer: run the bridge, start Wokwi with its private gateway, open the app, and connect it to the bridge.
+Complete setup before starting the timer: run the bridge, power the ESP32/DHT22 and relay, use Wi-Fi or USB serial to send readings to the laptop, open the app, and connect it to the bridge.
 
 | Time | Presenter action | What the audience sees |
 |---|---|---|
-| 0:00–0:20 | Show the connected app and steady 24°C Wokwi reading. | One demo house, temperature, humidity, 25°C demo setpoint, fan at 0%, closed app-only vent, and simulated-data labels. |
-| 0:20–0:45 | Raise temperature to 25°C using the Wokwi DHT22 control. | The app updates; the inspection prompt appears, the simulated fan shows 50%, and the visual vent is half-open. |
-| 0:45–1:05 | Raise temperature to 27°C. | Wokwi LED brightness and app fan indicator show 100%; the visual vent is fully open. |
-| 1:05–1:25 | Acknowledge the prompt, then lower temperature below 25°C. | The prompt shows acknowledged and recovered; it remains visible. |
+| 0:00–0:20 | Show the connected app and the current local ESP32/DHT22 reading. | One demo house, hardware source label, temperature, humidity, inspection state, and fan-relay ON/OFF state. |
+| 0:20–0:45 | Explain the shared demo threshold. | At or above 32°C the inspection prompt appears and the physical ESP32 turns the fan relay on. |
+| 0:45–1:05 | Show the relay state and sample age. | The app reports the ESP32 relay command; it does not measure fan rotation. |
+| 1:05–1:25 | Acknowledge the prompt if active; show recovery if the reading falls below 32°C. | After 60 seconds, a fresh below-threshold reading clears an acknowledged prompt; otherwise an active prompt returns to INSPECT. Unacknowledged recovery remains until reset. |
 | 1:25–1:45 | Reset the app demo. | The prompt and session reference clear. |
-| 1:45–2:00 | State the prototype boundary. | Wokwi simulation only; the LED represents a fan, and no real sensors, camera analysis, diagnosis, physical controls, SMS, or farm validation are included. |
+| 1:45–2:00 | State the prototype boundary. | One local DHT22, a demo-only relay threshold, and no camera analysis, diagnosis, SMS, or farm validation. |
 
 ## Out of scope
 
 - Multiple houses, farm profiles, production records, accounts, or cloud data storage.
-- Cameras, bird-activity classification, ammonia/CO₂ measurement, SMS, and physical fan, vent, servo, or temperature-control commands.
+- Cameras, bird-activity classification, ammonia/CO₂ measurement, SMS, fan speed control, vent/servo control, and farm-approved or validated control strategies.
 - Clinical or husbandry advice, validated safety thresholds, farm compatibility claims, offline-duration claims, or measured farm outcomes.
 - Production security, multi-user access, internet deployment, and remote monitoring.
 
@@ -54,9 +54,9 @@ The Wokwi MQ-2 part is a combustible-gas model and must not be presented as an a
 
 ## Success criteria
 
-- The presenter can change the Wokwi DHT22 input and see the app update over the local connection.
-- A reading below 25°C shows no prompt, 0% fan, and closed visual vent; 25°C shows one prompt, 50% fan, and half-open vent; 27°C shows 100% fan and fully open vent; falling below 25°C shows recovery. Acknowledgement and reset behave as described.
+- The physical ESP32/DHT22 can send readings to the app over the laptop's local bridge. Wokwi remains an optional repeatable test source.
+- At or above 32°C, the physical fan-relay command and inspection prompt are ON; below 32°C both are clear/OFF. The app reports the relay command. Wokwi mirrors that behavior with its simulated 0/100% fan LED.
 - Disconnection and stale data are labeled so old readings and last-known fan and vent states are not mistaken for current readings. Before any reading, both drawings show a dash.
-- A prepared presenter completes the walkthrough within two minutes without implying that simulated readings are live farm data.
+- A prepared presenter completes the walkthrough within two minutes without implying that local prototype readings or the demo rule are farm-validated.
 
 For architecture, the bridge contract, implementation order, and technical checks, see [build-requirements.md](build-requirements.md).

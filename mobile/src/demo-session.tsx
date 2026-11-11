@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Platform } from 'react-native';
 
 export type Reading = {
+  source: 'Wokwi simulated data' | 'Local ESP32 + DHT22';
   temperatureC: number;
   humidityPct: number;
   setpointC: number;
@@ -13,7 +14,7 @@ export type Reading = {
 export type AlertRecord = { acknowledged: boolean; recovered: boolean };
 
 type ReadingResponse = { reading: Reading | null };
-type DemoStatus = 'Not connected' | 'Checking bridge' | 'Waiting for Wokwi data' | 'Connected' | 'Stale reading' | 'Disconnected' | 'Disconnected · stale reading';
+type DemoStatus = 'Not connected' | 'Checking bridge' | 'Waiting for sensor data' | 'Connected' | 'Stale reading' | 'Disconnected' | 'Disconnected · stale reading';
 
 type DemoSessionValue = {
   bridgeUrl: string;
@@ -34,6 +35,7 @@ type DemoSessionValue = {
 };
 
 const STALE_AFTER_MS = 5000;
+const ACKNOWLEDGEMENT_DURATION_MS = 60_000;
 
 async function getJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
@@ -50,7 +52,8 @@ async function getJson<T>(url: string): Promise<T> {
 function isReading(value: unknown): value is Reading {
   if (!value || typeof value !== 'object') return false;
   const sample = value as Partial<Reading>;
-  return Number.isFinite(sample.temperatureC)
+  return (sample.source === 'Wokwi simulated data' || sample.source === 'Local ESP32 + DHT22')
+    && Number.isFinite(sample.temperatureC)
     && Number.isFinite(sample.humidityPct)
     && Number.isFinite(sample.setpointC)
     && typeof sample.alertActive === 'boolean'
@@ -69,13 +72,15 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [activeUrl, setActiveUrl] = useState('');
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [message, setMessage] = useState('Open House 1 to connect to the Wokwi bridge.');
+  const [message, setMessage] = useState('Enter the laptop bridge URL, then connect.');
   const [reading, setReading] = useState<Reading | null>(null);
   const [baseline, setBaseline] = useState<number | null>(null);
   const [alertRecord, setAlertRecord] = useState<AlertRecord | null>(null);
   const [now, setNow] = useState(Date.now);
+  const readingRef = useRef<Reading | null>(null);
   const baselineRef = useRef<number | null>(null);
   const alertRef = useRef<AlertRecord | null>(null);
+  const acknowledgementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousStatusRef = useRef('Not connected');
   const previousAlertRef = useRef<AlertRecord | null>(null);
 
@@ -88,19 +93,23 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       : stale
         ? 'Stale reading'
         : connected
-          ? (reading ? 'Connected' : 'Waiting for Wokwi data')
+          ? (reading ? 'Connected' : 'Waiting for sensor data')
           : 'Not connected';
   const statusDescription = connecting
     ? message
     : stale
-      ? `Last Wokwi sample received ${Math.floor(sampleAgeMs / 1000)}s ago.`
+      ? `Last sensor sample received ${Math.floor(sampleAgeMs / 1000)}s ago.`
       : connected
-        ? (reading ? 'Receiving simulated data from the local bridge.' : 'Bridge is ready. Waiting for a Wokwi reading.')
+        ? (reading ? `Receiving ${reading.source} from the local bridge.` : 'Bridge is ready. Waiting for sensor data.')
         : message;
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => () => {
+    if (acknowledgementTimerRef.current) clearTimeout(acknowledgementTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -140,12 +149,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         const payload = await getJson<ReadingResponse>(`${activeUrl}/api/reading`);
         if (!active) return;
         if (payload.reading === null) {
+          readingRef.current = null;
           setReading(null);
           return;
         }
         if (!isReading(payload.reading)) throw new Error('Bridge returned an invalid reading.');
 
         const sample = payload.reading;
+        readingRef.current = sample;
         setReading(sample);
         const fresh = Date.now() - Date.parse(sample.receivedAt) <= STALE_AFTER_MS;
         if (!fresh) return;
@@ -199,14 +210,17 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     try {
       const health = await getJson<{ ok: boolean }>(`${normalized}/api/health`);
       if (health.ok !== true) throw new Error('Bridge health check failed.');
+      if (acknowledgementTimerRef.current) clearTimeout(acknowledgementTimerRef.current);
+      acknowledgementTimerRef.current = null;
       baselineRef.current = null;
       alertRef.current = null;
+      readingRef.current = null;
       setBaseline(null);
       setAlertRecord(null);
       setReading(null);
       setActiveUrl(normalized);
       setConnected(true);
-      setMessage('Connected. Waiting for a fresh Wokwi reading.');
+      setMessage('Connected. Waiting for a fresh sensor reading.');
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'request failed';
       setMessage(`Could not connect: ${detail}`);
@@ -217,13 +231,33 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }
 
   function acknowledge() {
-    if (!alertRef.current) return;
+    if (!alertRef.current || alertRef.current.recovered) return;
+    if (acknowledgementTimerRef.current) clearTimeout(acknowledgementTimerRef.current);
     const next = { ...alertRef.current, acknowledged: true };
     alertRef.current = next;
     setAlertRecord(next);
+    acknowledgementTimerRef.current = setTimeout(() => {
+      const current = alertRef.current;
+      if (current) {
+        const latestReading = readingRef.current;
+        const readingFresh = latestReading !== null
+          && Date.now() - Date.parse(latestReading.receivedAt) <= STALE_AFTER_MS;
+        if (current.recovered && readingFresh) {
+          alertRef.current = null;
+          setAlertRecord(null);
+        } else {
+          const reset = { ...current, acknowledged: false };
+          alertRef.current = reset;
+          setAlertRecord(reset);
+        }
+      }
+      acknowledgementTimerRef.current = null;
+    }, ACKNOWLEDGEMENT_DURATION_MS);
   }
 
   function resetDemo() {
+    if (acknowledgementTimerRef.current) clearTimeout(acknowledgementTimerRef.current);
+    acknowledgementTimerRef.current = null;
     baselineRef.current = null;
     alertRef.current = null;
     setBaseline(null);

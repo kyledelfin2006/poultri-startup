@@ -5,8 +5,7 @@
 namespace {
 constexpr int DHT_PIN = 15;
 constexpr int FAN_LED_PIN = 18;
-constexpr float ALERT_SETPOINT_C = 25.0f;
-constexpr float FULL_FAN_SETPOINT_C = 27.0f;
+constexpr float DEMO_THRESHOLD_C = 32.0f;
 constexpr unsigned long SAMPLE_INTERVAL_MS = 2000;
 constexpr unsigned long WIFI_RETRY_MS = 5000;
 constexpr char BRIDGE_URL[] = "http://host.wokwi.internal:4174/api/reading";
@@ -26,9 +25,7 @@ void retryWifiWhenDue(unsigned long now) {
 }
 
 int fanSpeedFor(float temperatureC) {
-  if (temperatureC >= FULL_FAN_SETPOINT_C) return 100;
-  if (temperatureC >= ALERT_SETPOINT_C) return 50;
-  return 0;
+  return temperatureC >= DEMO_THRESHOLD_C ? 100 : 0;
 }
 
 void postReading(float temperatureC, float humidityPct, bool alertActive, int fanSpeedPct) {
@@ -44,7 +41,7 @@ void postReading(float temperatureC, float humidityPct, bool alertActive, int fa
   http.addHeader("Content-Type", "application/json");
   String body = "{\"temperatureC\":" + String(temperatureC, 1) +
                 ",\"humidityPct\":" + String(humidityPct, 1) +
-                ",\"setpointC\":" + String(ALERT_SETPOINT_C, 1) +
+                ",\"setpointC\":" + String(DEMO_THRESHOLD_C, 1) +
                 ",\"alertActive\":" + String(alertActive ? "true" : "false") +
                 ",\"fanSpeedPct\":" + String(fanSpeedPct) + "}";
   int status = http.POST(body);
@@ -62,7 +59,7 @@ void setup() {
   WiFi.begin("Wokwi-GUEST", "", 6);
   lastWifiAttemptAt = millis();
   Serial.println("Poultri Wokwi demo starting");
-  Serial.println("Demo rule: alert at 25.0 C; simulated fan 0/50/100 percent");
+  Serial.println("Demo rule: inspection prompt and simulated fan turn ON at 32.0 C or above");
 }
 
 void loop() {
@@ -81,7 +78,7 @@ void loop() {
     return;
   }
 
-  const bool alertActive = sample.temperature >= ALERT_SETPOINT_C;
+  const bool alertActive = sample.temperature >= DEMO_THRESHOLD_C;
   const int fanSpeedPct = fanSpeedFor(sample.temperature);
   analogWrite(FAN_LED_PIN, fanSpeedPct * 255 / 100);
 

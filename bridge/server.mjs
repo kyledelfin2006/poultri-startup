@@ -59,17 +59,20 @@ async function route(request, response) {
 
   if (request.method === 'POST' && url.pathname === '/api/reading') {
     const value = await readJson(request);
+    const source = value?.source ?? 'Wokwi simulated data';
     const validTemperature = Number.isFinite(value?.temperatureC) && value.temperatureC >= -40 && value.temperatureC <= 80;
     const validHumidity = Number.isFinite(value?.humidityPct) && value.humidityPct >= 0 && value.humidityPct <= 100;
     const validSetpoint = Number.isFinite(value?.setpointC) && value.setpointC >= -40 && value.setpointC <= 80;
     const validAlert = typeof value?.alertActive === 'boolean';
     const validFanSpeed = Number.isInteger(value?.fanSpeedPct) && value.fanSpeedPct >= 0 && value.fanSpeedPct <= 100;
-    if (!validTemperature || !validHumidity || !validSetpoint || !validAlert || !validFanSpeed) {
+    const validSource = source === 'Wokwi simulated data' || source === 'Local ESP32 + DHT22';
+    if (!validTemperature || !validHumidity || !validSetpoint || !validAlert || !validFanSpeed || !validSource) {
       json(response, 400, { error: 'Reading fields are invalid or outside the accepted range' });
       return;
     }
 
     latestReading = {
+      source,
       temperatureC: value.temperatureC,
       humidityPct: value.humidityPct,
       setpointC: value.setpointC,

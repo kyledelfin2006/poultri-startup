@@ -1,4 +1,4 @@
-# Poultri Wokwi + Mobile Demo
+# Poultri Sensor + Mobile Demo
 
 <p align="center">
   <img src="assets/poultri_full_logo.png" alt="Official Poultri full logo" width="190" />
@@ -19,9 +19,9 @@ The concept plans on-site processing so core monitoring can continue during inte
 
 ### What this demo shows
 
-This repository demonstrates one small part of Poultri: **a simulated ESP32/DHT22 sends temperature and humidity readings, a demo alert state, and a fan-speed indicator from Wokwi through a laptop bridge to the mobile app.** A PWM LED in Wokwi represents the fan output; it does not control physical equipment.
+This repository demonstrates one small part of Poultri: **an ESP32/DHT22 sends temperature and humidity readings through a laptop bridge to the mobile app, and the physical ESP32 switches a fan relay at a demo 32°C threshold.** Wokwi remains available as a simulated source for repeatable tests. This is a local prototype, not a validated farm-control system.
 
-> **Prototype status:** Poultri is still a concept and prototype. This demo uses simulated data; it has not been validated on a farm and does not provide poultry-health guidance.
+> **Prototype status:** This local prototype can display physical DHT22 readings or Wokwi simulated data. The shared 32°C inspection/fan threshold and readings have not been validated on a farm and do not provide poultry-health guidance.
 
 ## Team
 
@@ -32,22 +32,24 @@ This repository demonstrates one small part of Poultri: **a simulated ESP32/DHT2
 
 ## What works in this demo
 
-- Wokwi simulates one ESP32 and one DHT22. Change temperature and humidity from the sensor controls.
-- The ESP32 sends readings every two seconds to the local Node bridge.
-- The mobile app opens to a House 1 overview with temperature, humidity, simulated fan percentage, connection state, and inspection-prompt state. Its light and dark screens use a warm neutral canvas, charcoal house and airflow cards, sage accents, and a terracotta inspection state; the supplied artwork is unchanged. Open House 1 for the simulation setpoint, sample age, inspection prompt and acknowledgement, combined app-only fan and vent drawings, and local bridge setup. The line drawing of the house is decorative; readings remain Wokwi simulated data.
-- The first fresh reading after connecting or resetting is saved as session context. A reading at or above the **25°C demo setpoint** creates an inspection prompt. The Wokwi LED and app show a simulated fan level: **0% below 25°C, 50% from 25°C to below 27°C, and 100% at or above 27°C**.
-- On House 1 detail, an app-only fan drawing is still at **0%** and spins at **50%** or **100%**. Animated vent louvers follow the same percentage: **closed at 0%, half-open at 50%, fully open at 100%**. Both drawings show a dash before the first reading and label retained states stale or disconnected. No physical fan, vent, or servo is connected or controlled.
-- Acknowledge the prompt, lower the temperature below 25°C to show recovery, and tap **Reset session** to clear the app session.
+- `arduino/PoultriESP32/PoultriESP32.ino` reads a physical DHT22 on GPIO 4, switches a relay on GPIO 26 ON at 32°C or above and OFF below 32°C, and sends samples every 2.5 seconds over Wi-Fi to the local Node bridge. For a laptop-only USB route, `bridge/serial-forwarder.ps1` forwards the sketch's serial readings to the same bridge.
+- Wokwi remains an optional simulated ESP32/DHT22 source for repeatable temperature changes.
+- The mobile app opens to a House 1 overview with temperature, humidity, source-aware fan state, connection state, and inspection-prompt state. Its light and dark screens pair deep evergreen and vivid leaf-green accents from the Poultri identity with pale green-tinted and white surfaces; yellow-green marks attention states. Typography pairs a condensed display face for headings and key readings with the system sans-serif for instructions and controls. The official logo and wordmark are unchanged. The inspection rule remains active, while Home and House 1 detail omit numeric setpoint display and setpoint-specific explanatory copy. Open House 1 for sample age, inspection prompt and acknowledgement, fan-relay status, and app-only vent visual. **Bridge setup** connects the app to the laptop bridge. The source label identifies local ESP32/DHT22 hardware or Wokwi simulation.
+- The first fresh reading after connecting or resetting is saved as session context. A reading at or above the **32°C threshold** activates both the inspection prompt and physical fan relay. Acknowledgement displays for 60 seconds; a fresh below-threshold reading then clears the prompt, while an active alert returns to INSPECT. An unacknowledged recovered prompt remains until reset. The app reports the physical relay command as ON/OFF; Wokwi mirrors the same threshold with its simulated fan LED.
+- On House 1 detail, the fan drawing follows the physical ESP32 relay command or the Wokwi simulated percentage. The vent remains an app-only visual. Both visuals stop for stale or disconnected readings; fan animation also respects reduced-motion settings. The app reports the relay command but does not measure fan rotation.
+- Acknowledge the prompt and lower the temperature below 32°C to show recovery. Open **Bridge setup** and tap **Reset session** to clear the app session.
 - Humidity is display-only. All values and the alert rule are illustrative.
 
-**Rule note:** the concept note does not define a numerical temperature threshold or fan-control rule. The **25°C setpoint and fan levels are demo-only choices**, not farm settings or poultry-health limits. The LED is only a visual output indicator; no physical fan is connected or controlled.
+**Rule note:** the concept note does not define a numerical temperature threshold or fan-control rule. The shared **32°C inspection and relay threshold is a demo-only choice**, not a farm setting or poultry-health limit. The ESP32 controls the local relay; the app only reports its command state. Wokwi's LED remains a simulated indicator.
 
 ## Run the connected demo
 
-This section is a from-scratch Windows setup. It runs the simulator, bridge, and development tools on the laptop. The app screen runs on an Android phone, or optionally on an Android emulator on the same laptop. No physical ESP32, DHT22, or fan is needed.
+This section is a from-scratch Windows setup. The physical ESP32/DHT22 can send over private Wi-Fi or USB serial through the laptop; the Android app connects to the local bridge. The fan is switched through the ESP32 relay output. Wokwi is an optional simulated input.
 
 ~~~text
-Wokwi ESP32 simulator ──VS Code networking──> Node bridge on laptop :4174
+Physical ESP32 + DHT22 ──private Wi-Fi───> Node bridge on laptop :4174
+Physical ESP32 + DHT22 ──USB serial forwarder──> Node bridge on laptop :4174
+Wokwi simulator (optional) ──────────────> Node bridge on laptop :4174
 Android app ─────────────────────────────> Node bridge on laptop :4174
 ~~~
 
@@ -58,9 +60,7 @@ With Wokwi for VS Code 4.0, this project reached the laptop bridge without a `[n
 1. Install [Git for Windows](https://git-scm.com/download/win). Keep the installer’s default options.
 2. Install [Visual Studio Code](https://code.visualstudio.com/Download). This is the code editor named **Visual Studio Code**, not the full Visual Studio IDE.
 3. Install the current **LTS** release of [Node.js](https://nodejs.org/en/download). npm is included with Node.js.
-4. Open VS Code. Press **Ctrl+Shift+X** to open Extensions, search for and install these two extensions:
-   - **PlatformIO IDE** by PlatformIO. It includes PlatformIO Core and is the recommended firmware build setup; a separate Python or PlatformIO download is not needed for this path. [PlatformIO VS Code setup](https://docs.platformio.org/en/latest/integration/ide/vscode.html)
-   - **Wokwi for VS Code** by Wokwi. Follow the extension prompt or press **Ctrl+Shift+P**, run **Wokwi: Request a new License**, and approve the browser-to-VS-Code activation. [Wokwi VS Code setup](https://docs.wokwi.com/vscode/getting-started)
+4. Install **Arduino IDE 2.x** for the physical ESP32 path. The **PlatformIO IDE** and **Wokwi for VS Code** extensions in VS Code are optional and only needed for the Wokwi simulator path. [PlatformIO setup](https://docs.platformio.org/en/latest/integration/ide/vscode.html) · [Wokwi setup](https://docs.wokwi.com/vscode/getting-started)
 5. Install [Expo Go from Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent) if you want to preview UI changes on a phone. The fully connected Android demo uses the preview APK in step D, because that APK includes this project's local-network HTTP setting.
 6. Keep the laptop connected to the internet for the first firmware build, npm install, and EAS APK build. For the phone demo, connect the phone and laptop to the same private Wi-Fi.
 
@@ -79,7 +79,7 @@ Open a new PowerShell window and confirm Android tools are available by running 
 
 In Android Studio, choose **More Actions → Virtual Device Manager → Create Virtual Device**. Choose a Pixel device, select an API 36 system image, finish creating it, then press its **Play** button. Enable CPU virtualization in BIOS/UEFI if the emulator will not start. Google lists 16 GB RAM as the minimum for Android Studio with an emulator and recommends 32 GB. See [Android Studio requirements](https://developer.android.com/studio/install).
 
-The app can then be built and run locally in step D. When it asks for the bridge URL, enter **http://10.0.2.2:4174**. That address routes the emulator to the laptop. This route keeps the app, bridge, and Wokwi simulation on one laptop and does not require an Expo account or APK download.
+The app can then be built and run locally in step D. When it asks for the bridge URL, enter **http://10.0.2.2:4174**. That address routes the emulator to the laptop. The physical ESP32 can still post to the laptop's Wi-Fi address while the app runs in the emulator.
 
 ### B. Download this project and open it
 
@@ -93,7 +93,19 @@ code .
 
 If code is not recognized, open VS Code from the Start menu, choose **File → Open Folder**, and select the poultri-app folder you just cloned. If you already have this repository on your laptop, open its existing folder instead of cloning it again. In VS Code, choose **File → Trust** if asked whether you trust this project.
 
-### C. Build and start the Wokwi sensor (one time to build, each demo to start)
+### C. Set up the physical ESP32 + DHT22 (one time, then each demo)
+
+1. In Arduino IDE **File → Preferences**, add Espressif's stable Boards Manager URL: `https://espressif.github.io/arduino-esp32/package_esp32_index.json`.
+2. In Boards Manager, install **esp32 by Espressif Systems** and select the board that matches your module. A common ESP32-WROOM-32 DevKit uses **ESP32 Dev Module**.
+3. In Library Manager, install **DHT sensor library by Adafruit** and **Adafruit Unified Sensor**.
+4. Wire the DHT22 module: **VCC → 3V3**, **GND → GND**, **DATA → GPIO 4**. Bare four-pin DHT22 sensors need a pull-up resistor from DATA to 3V3; breakout modules often include one.
+5. Connect the relay module's logic input to **GPIO 26**. The sketch defaults to an active-high module, matching the earlier sketch. Use a relay rated for the fan supply/current; never connect a fan directly to an ESP32 GPIO.
+6. For Wi-Fi delivery, start the bridge in section E, copy `arduino/PoultriESP32/secrets.h.example` to `secrets.h`, enter your 2.4 GHz Wi-Fi name/password, and set `BRIDGE_URL` to the laptop URL plus `/api/reading`. For USB delivery, leave Wi-Fi credentials unset and use the serial forwarder in section E. The local `secrets.h` is ignored by Git.
+7. Select the ESP32 board and COM port, click **Verify**, then **Upload**. If upload says “Connecting…”, hold the board's **BOOT** button until writing starts. Serial Monitor runs at **115200 baud**; close it before starting the USB forwarder because COM7 can only be opened by one reader.
+
+The phone and laptop must share the same private Wi-Fi. For the phone app, use the base laptop URL without `/api/reading`; the app adds the API paths.
+
+### C (optional). Build and start the Wokwi sensor
 
 1. In VS Code, choose **File → Open Folder** and open the wokwi folder inside the cloned repository. This folder contains the existing platformio.ini, wokwi.toml, and circuit diagram. If VS Code asks to trust the project, choose **Trust**.
 2. Wait for PlatformIO’s first-time setup to finish. It downloads the ESP32 compiler and libraries; this can take several minutes.
@@ -101,7 +113,9 @@ If code is not recognized, open VS Code from the Start menu, choose **File → O
 4. Press **Ctrl+Shift+P**, run **Wokwi: Start Simulator**, and wait for the ESP32 to print temperature and humidity readings.
 5. `wokwi.toml` has no external gateway override. Check the Wokwi terminal for `Bridge POST status: 201`. If you previously saw a `ws://localhost:9011` error, stop and start the simulation after updating this file. [Gateway details](https://docs.wokwi.com/vscode/project-config)
 
-You can leave the VS Code simulator window open. The next two sections use separate PowerShell windows. In each new PowerShell window, first change to the cloned repository folder, for example:
+For a presentation without the editor in view, right-click the **Wokwi Simulator** tab and choose **Move into New Window**. In that window, turn on **Compact Mode**, then place it beside the Android emulator. To show the live readings separately too, right-click **Wokwi Terminal** in the VS Code terminal list, choose **Move Terminal into New Window**, and turn on **Compact Mode** there. Keep the original VS Code window open behind them; the Wokwi extension still runs the simulation. Moving the simulator tab may reload Wokwi, so check that readings resume and the bridge receives POSTs. This uses the same simulator and bridge, with no separate simulator app. [VS Code custom layout](https://code.visualstudio.com/docs/configure/custom-layout), [terminal window guide](https://code.visualstudio.com/docs/terminal/basics)
+
+The next two sections use separate PowerShell windows. In each new PowerShell window, first change to the cloned repository folder, for example:
 
 ~~~powershell
 Set-Location "$env:USERPROFILE\poultri-app"
@@ -160,21 +174,27 @@ Scan the QR code with Expo Go and keep this terminal running. For connected read
    npm.cmd start
    ~~~
 
-   Leave this window open. The bridge prints the Wokwi address (http://host.wokwi.internal:4174) and possible phone addresses, for example http://192.168.1.20:4174.
+Leave this window open. The bridge prints possible laptop addresses, for example http://192.168.1.20:4174. Use the laptop's Wi-Fi URL in both the physical sketch and phone app.
 
 2. If Windows Firewall asks, allow Node.js on **Private networks only**. The bridge listens on port 4174.
 3. Confirm the bridge is running by opening http://localhost:4174/api/health in the laptop browser. It should show {"ok":true}.
-4. Make sure the Wokwi simulation is running. Its terminal should show `Bridge POST status: 201`. Leave it running.
-5. Open the Poultri app and tap the **House 1** overview card. On its detail screen, enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect to bridge**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
-6. Wait for the app to show a reading. Keep the Wokwi DHT22 at **24.0°C** until the first reading is received; that becomes the session reference.
-7. Click the DHT22 in Wokwi to open its controls. Raise the temperature to **25.0°C**. The app should show an inspection prompt, a **50%** spinning fan drawing, and a half-open visual vent. At **27.0°C**, the fan drawing should spin faster at **100%** and the vent should be fully open. Below **25.0°C**, the fan drawing should stop and the vent should appear closed.
-8. On the House 1 detail screen, tap **Acknowledge**, then lower the temperature below **25.0°C**. The app should show **Reading recovered**; the prompt remains until you tap **Reset session**.
+4. For Wi-Fi mode, confirm the ESP32 Serial Monitor shows `Bridge POST status: 201`. For USB mode, close Serial Monitor and run the forwarder in another PowerShell window:
 
-The ESP32 sends a reading every two seconds and the app checks the bridge every second. Allow a few seconds for each sensor change to appear.
+   ~~~powershell
+   .\bridge\serial-forwarder.ps1 -Port COM7
+   ~~~
+
+   Leave the USB forwarder running; it reads COM7 and posts the physical sample to the laptop bridge. If using Wokwi, leave its simulator running instead.
+5. Open the Poultri app, tap the **House 1** overview card, then tap **Bridge setup**. Enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect to bridge**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
+6. Wait for the app to show a reading and its source label. The first fresh reading becomes the session reference.
+7. The physical sensor reports actual room temperature and humidity; it cannot be set from the app. At **32.0°C**, the inspection prompt appears and the ESP32 switches the fan relay ON; below 32.0°C both clear/OFF. The app shows the relay command as ON/OFF. Use Wokwi for repeatable simulated transitions at the same threshold.
+8. On the House 1 detail screen, tap **Acknowledge** if a prompt is active. When the reading falls below **32.0°C**, the app shows **Reading recovered**; after 60 seconds an acknowledged prompt clears to **No inspection prompt**. An unacknowledged prompt remains until **Bridge setup → Reset session**.
+
+The physical sketch samples every 2.5 seconds, Wokwi samples every two seconds, and the app checks the bridge every second. Allow a few seconds for each reading to appear.
 
 ### What should be open during the connected demo
 
-- VS Code with the Wokwi simulation running and successful bridge POSTs in its terminal.
+- ESP32 connected to the DHT22 and relay module. For Wi-Fi mode, keep it and the laptop on the same private Wi-Fi. For USB mode, keep the ESP32 connected and run `bridge/serial-forwarder.ps1`; close Arduino Serial Monitor first. If using Wokwi, keep its simulator running instead.
 - One PowerShell window running npm.cmd start from bridge/.
 - The Poultri app connected to the laptop bridge. For the laptop-only emulator setup, keep the PowerShell window running the Android build/Expo server open. For the phone APK setup, the Expo server is not needed after installing the APK.
 
@@ -182,23 +202,24 @@ The EAS build terminal can be closed after the APK is installed. Expo Go and the
 
 ## Repeat the demo
 
-There is no single control that resets Wokwi, the bridge, and the app together. To start another run quickly:
+There is no single control that resets the sensor source, bridge, and app together. To start another run quickly:
 
-1. Restart the Wokwi simulation, or set the DHT22 temperature below the alert trigger.
+1. Wait for the physical reading to update, or restart the Wokwi simulation / lower its DHT22 below the alert trigger.
 2. Wait for a fresh reading in the app.
-3. Open House 1 and tap **Reset session** on its detail screen.
-4. Raise the DHT22 temperature again.
+3. Open House 1, tap **Bridge setup**, then tap **Reset session**.
+4. Let the physical sensor report its next reading; use Wokwi controls if you need an exact repeatable threshold value.
 
-Keep the bridge running between runs. The next Wokwi POST replaces its latest reading; the app reset clears the app's session reference and prompt.
+Keep the bridge running between runs. The next sensor POST replaces its latest reading; the app reset clears the app's session reference and prompt.
 
 ## Troubleshooting
 
 - **PlatformIO Build is missing:** confirm VS Code opened the repository's `wokwi` folder, not the repository root. Wait for PlatformIO's first-time setup, then reopen **Project Tasks → esp32dev → General**.
 - **Wokwi says firmware or `diagram.json` is missing:** build first and confirm the `wokwi` folder is open. If VS Code is open at the repository root, run **Wokwi: Select Config File** and choose `wokwi/wokwi.toml`.
 - **Wokwi readings print, but the bridge gets no POSTs:** confirm `wokwi.toml` has no `[net] gateway` override, then stop and start the simulation. Check its terminal for `Bridge POST status: 201` and verify the bridge is running on port 4174.
+- **Physical ESP32 prints readings but sends no POST:** check the Wi-Fi name/password, laptop LAN address in `BRIDGE_URL`, port 4174, and Windows Firewall permission for Node on Private networks. Confirm phone, laptop, and ESP32 are on the same private Wi-Fi.
 - **Phone app cannot connect:** check that the bridge is running, enter the laptop's Wi-Fi IPv4 address with port `4174`, keep phone and laptop on the same Wi-Fi, and allow Node through Windows Firewall on Private networks. Use the installed preview APK for the connected demo.
 - **Emulator app cannot connect:** enter `http://10.0.2.2:4174` as the bridge URL and check Windows Firewall.
-- **Old reading remains visible:** the app labels readings older than five seconds as stale. Confirm Wokwi is running and sending successful POSTs.
+- **Old reading remains visible:** the app labels readings older than five seconds as stale. Confirm the chosen ESP32 or Wokwi source is running and sending successful POSTs.
 
 ## Project guides
 
@@ -211,4 +232,4 @@ Keep the bridge running between runs. The next Wokwi POST replaces its latest re
 
 The supplied Poultri concept note defines product intent, but is not checked into this repository. For this prototype, [MVP requirements](mvp-requirements.md) are authoritative for scope and behavior, and [build requirements](build-requirements.md) are authoritative for architecture, interfaces, setup, and verification steps. [Patent and technical scope](patent.md) is a concept-derived planning brief, not a description of the current app or approved implementation scope. This README is the user-facing overview; [implementation notes](implementation.md) record the current implementation and clearly dated verification status. Update affected docs with code changes and remove obsolete docs or stale status claims.
 
-**Prototype boundary:** only the Wokwi temperature/humidity sensor is simulated. There is no camera, gas sensor, production record, physical fan, vent, servo, or temperature control, SMS, diagnosis, account, cloud service, push notification, or farm validation. The simulated fan is a Wokwi LED indicator plus an app-only drawing; the vent is an app-only visual.
+**Prototype boundary:** the physical input is one DHT22 temperature/humidity sensor. The ESP32 drives a fan relay on GPIO 26 using a demo-only 32°C threshold; the app reports the relay command but does not verify fan rotation. Wokwi uses a simulated LED. There is no camera, gas sensor, production record, physical vent or servo, fan-speed control, SMS, diagnosis, account, cloud service, push notification, or farm validation.

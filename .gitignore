@@ -1,0 +1,9 @@
+# Local Wi-Fi credentials: commit only the example template.
+arduino/PoultriESP32/secrets.h
+
+# PlatformIO-generated files contain machine-specific paths.
+/wokwi/.vscode/c_cpp_properties.json
+/wokwi/.vscode/launch.json
+
+# Separate reference artwork, not used by the Poultri app or bridge.
+/display-loop/

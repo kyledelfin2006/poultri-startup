@@ -1,8 +1,12 @@
-import { Image, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+
+export const systemFont = Platform.select({ android: 'sans-serif', ios: 'System', default: 'sans-serif' });
+export const displayFont = Platform.select({ android: 'sans-serif-condensed', ios: 'Avenir Next', default: 'sans-serif-condensed' });
 
 export type Palette = {
   background: string;
   surface: string;
+  surfaceAlt: string;
   ink: string;
   body: string;
   muted: string;
@@ -24,49 +28,51 @@ export type Palette = {
 };
 
 const lightPalette: Palette = {
-  background: '#F2F0E9',
-  surface: '#F2F0E9',
-  ink: '#1C2B26',
-  body: '#263630',
-  muted: '#64766B',
-  quiet: '#75877A',
-  border: '#C8D0C4',
-  forest: '#263630',
-  greenText: '#355B45',
-  lime: '#A9CE83',
-  alertSurface: '#EBC9B0',
-  greenSurface: '#D8E5D2',
-  inputBorder: '#A7B9A8',
-  onForest: '#F5F7EF',
-  onForestMuted: '#D0DED0',
-  onForestAccent: '#B8DB91',
-  forestRaised: '#405E49',
-  forestLine: '#657B6A',
-  warningSurface: '#EBC9B0',
-  warningInk: '#693D31',
+  background: '#F4F8F2',
+  surface: '#FFFFFF',
+  surfaceAlt: '#E8F1E5',
+  ink: '#153B2A',
+  body: '#294B37',
+  muted: '#536D5C',
+  quiet: '#5D7665',
+  border: '#D5E3D5',
+  forest: '#075A35',
+  greenText: '#17683B',
+  lime: '#8ED63B',
+  alertSurface: '#F0F2C8',
+  greenSurface: '#E4F0DF',
+  inputBorder: '#AFC7B1',
+  onForest: '#F6FAF4',
+  onForestMuted: '#D6E8D5',
+  onForestAccent: '#A6E65A',
+  forestRaised: '#146A40',
+  forestLine: '#43805A',
+  warningSurface: '#F0F2C8',
+  warningInk: '#4E551E',
 };
 
 const darkPalette: Palette = {
-  background: '#18241E',
-  surface: '#24342B',
-  ink: '#F4F5ED',
-  body: '#E5EBDD',
-  muted: '#B8CAB6',
-  quiet: '#A8BBA9',
-  border: '#526659',
-  forest: '#263630',
-  greenText: '#C4DFA9',
-  lime: '#A9CE83',
-  alertSurface: '#5D4035',
-  greenSurface: '#344B3A',
-  inputBorder: '#718675',
-  onForest: '#F5F7EF',
-  onForestMuted: '#D0DED0',
-  onForestAccent: '#B8DB91',
-  forestRaised: '#405E49',
-  forestLine: '#657B6A',
-  warningSurface: '#5D4035',
-  warningInk: '#FFE0CB',
+  background: '#0C1F16',
+  surface: '#152D20',
+  surfaceAlt: '#1D3A29',
+  ink: '#F2F7EF',
+  body: '#DCE9DA',
+  muted: '#B6CBB8',
+  quiet: '#A9C0AC',
+  border: '#365743',
+  forest: '#0A4B2D',
+  greenText: '#A7DF80',
+  lime: '#98DC4B',
+  alertSurface: '#3A421C',
+  greenSurface: '#203D2B',
+  inputBorder: '#52745B',
+  onForest: '#F6FAF4',
+  onForestMuted: '#D6E8D5',
+  onForestAccent: '#A6E65A',
+  forestRaised: '#146A40',
+  forestLine: '#43805A',
+  warningSurface: '#3A421C',
+  warningInk: '#E9F28A',
 };
 
 export function usePalette() {
@@ -75,7 +81,7 @@ export function usePalette() {
 
 export function BrandHeader({ palette }: { palette: Palette }) {
   return (
-    <View style={[styles.brand, { backgroundColor: palette.background === lightPalette.background ? 'transparent' : lightPalette.background }]}>
+    <View style={[styles.brand, { backgroundColor: palette.surface }]}>
       <Image
         source={require('../assets/poultri-logo.png')}
         style={styles.logo}
@@ -111,8 +117,8 @@ export function ActionButton({
 }) {
   const componentStyles = StyleSheet.create({
     button: {
-      minHeight: 50,
-      borderRadius: 9,
+      minHeight: 52,
+      borderRadius: 15,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 18,
@@ -121,7 +127,7 @@ export function ActionButton({
       borderColor: palette.inputBorder,
       opacity: disabled ? 0.5 : 1,
     },
-    text: { color: secondary ? palette.greenText : palette.onForest, fontSize: 15, fontWeight: '700' as const },
+    text: { color: secondary ? palette.greenText : palette.onForest, fontFamily: systemFont, fontSize: 15, fontWeight: '700' as const, letterSpacing: 0.1 },
   });
 
   return (
@@ -138,7 +144,7 @@ export function ActionButton({
 }
 
 export function SectionTitle({ children, palette }: { children: string; palette: Palette }) {
-  return <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '800' }}>{children}</Text>;
+  return <Text style={{ color: palette.ink, fontFamily: displayFont, fontSize: 19, fontWeight: '800' }}>{children}</Text>;
 }
 
 const styles = StyleSheet.create({
@@ -146,11 +152,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 8,
-    minHeight: 48,
-    borderRadius: 8,
+    gap: 6,
+    minHeight: 44,
+    borderRadius: 11,
+    paddingHorizontal: 3,
   },
-  logo: { width: 38, height: 38 },
-  wordmark: { width: 112, height: 42 },
+  logo: { width: 35, height: 35 },
+  wordmark: { width: 108, height: 36 },
   metricIcon: { width: 16, height: 16 },
 });
