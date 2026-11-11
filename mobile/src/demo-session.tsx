@@ -22,6 +22,7 @@ type DemoSessionValue = {
   connecting: boolean;
   message: string;
   reading: Reading | null;
+  samples: number[]; // temperatures received since connecting, oldest first
   baseline: number | null;
   alertRecord: AlertRecord | null;
   sampleAgeMs: number;
@@ -34,6 +35,7 @@ type DemoSessionValue = {
 };
 
 const STALE_AFTER_MS = 5000;
+const MAX_SAMPLES = 120; // about four minutes at the 2-second firmware rate
 
 async function getJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
@@ -71,6 +73,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [connecting, setConnecting] = useState(false);
   const [message, setMessage] = useState('Open House 1 to connect to the Wokwi bridge.');
   const [reading, setReading] = useState<Reading | null>(null);
+  const [samples, setSamples] = useState<number[]>([]);
+  const lastSampleAtRef = useRef<string | null>(null);
   const [baseline, setBaseline] = useState<number | null>(null);
   const [alertRecord, setAlertRecord] = useState<AlertRecord | null>(null);
   const [now, setNow] = useState(Date.now);
@@ -150,6 +154,12 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         const fresh = Date.now() - Date.parse(sample.receivedAt) <= STALE_AFTER_MS;
         if (!fresh) return;
 
+        // The bridge repeats its latest reading on every poll; record each one once.
+        if (lastSampleAtRef.current !== sample.receivedAt) {
+          lastSampleAtRef.current = sample.receivedAt;
+          setSamples((previous) => [...previous, sample.temperatureC].slice(-MAX_SAMPLES));
+        }
+
         if (baselineRef.current === null) {
           baselineRef.current = sample.temperatureC;
           setBaseline(sample.temperatureC);
@@ -204,6 +214,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       setBaseline(null);
       setAlertRecord(null);
       setReading(null);
+      setSamples([]);
+      lastSampleAtRef.current = null;
       setActiveUrl(normalized);
       setConnected(true);
       setMessage('Connected. Waiting for a fresh Wokwi reading.');
@@ -240,6 +252,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         connecting,
         message,
         reading,
+        samples,
         baseline,
         alertRecord,
         sampleAgeMs,

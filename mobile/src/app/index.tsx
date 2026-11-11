@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDemoSession } from '../demo-session';
-import { BrandHeader, MetricIcon, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
+import { TrendLine } from '../trend-line';
+import { BrandHeader, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -11,7 +12,10 @@ export default function HomeScreen() {
   const { width, fontScale } = useWindowDimensions();
   const compact = width < 370 || fontScale >= 1.3;
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const { reading, alertRecord, status, sampleAgeMs, stale } = useDemoSession();
+  const { reading, samples, alertRecord, status, sampleAgeMs, stale } = useDemoSession();
+  // App-only vent state; follows the simulated fan percentage, as on House 1.
+  const fan = reading?.fanSpeedPct;
+  const ventState = fan === undefined ? '—' : fan === 0 ? 'Closed' : fan === 50 ? 'Half-open' : fan === 100 ? 'Open' : 'Partly open';
   const needsAttention = !!alertRecord && !alertRecord.recovered;
   const statusWarning = stale || status.startsWith('Disconnected');
   const reviewLabel = alertRecord
@@ -54,37 +58,32 @@ export default function HomeScreen() {
           accessibilityLabel={`Open House 1. Wokwi simulated data. Temperature ${reading ? `${reading.temperatureC.toFixed(1)} degrees Celsius` : 'unavailable'}, humidity ${reading ? `${reading.humidityPct.toFixed(1)} percent` : 'unavailable'}, simulated fan ${reading ? `${reading.fanSpeedPct} percent` : 'unavailable'}. ${status}. ${reviewLabel}.`}
           style={({ pressed }) => [styles.houseCard, pressed && styles.pressed]}
         >
-          <Image source={require('../../assets/house-line.png')} style={styles.houseArt} resizeMode="contain" accessible={false} />
           <View style={styles.cardTop}>
-            <Text style={styles.houseTitle}>House 1</Text>
-            <View style={styles.openCircle}><Text style={styles.openCircleArrow}>→</Text></View>
+            <Text style={styles.houseLabel}>HOUSE 1</Text>
+            <Text style={styles.updated}>{reading ? `Updated ${Math.floor(sampleAgeMs / 1000)}s ago` : 'No readings yet'}</Text>
           </View>
-          <View style={[styles.statusPill, statusWarning && styles.statusPillWarning]}>
+          <View style={styles.statusRow}>
             <View style={[styles.statusDot, statusWarning ? styles.warningDot : reading ? styles.liveDot : styles.waitingDot]} />
             <Text style={[styles.statusText, statusWarning && styles.statusTextWarning]}>{status}</Text>
           </View>
-          <View style={styles.primaryMetric}>
-            <Text style={[styles.temperature, compact && styles.temperatureCompact]} accessibilityLabel={reading ? `Temperature ${reading.temperatureC.toFixed(1)} degrees Celsius` : 'Temperature unavailable'}>
-              {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
-            </Text>
-            <View style={styles.metricLabelRow}>
-              <MetricIcon kind="temperature" color={palette.muted} />
-              <Text style={styles.metricLabel}>Temperature</Text>
-            </View>
+          <Text style={[styles.temperature, compact && styles.temperatureCompact]} accessibilityLabel={reading ? `Temperature ${reading.temperatureC.toFixed(1)} degrees Celsius` : 'Temperature unavailable'}>
+            {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
+          </Text>
+          <Text style={styles.metricLabel}>Current temperature</Text>
+          <View style={styles.trend}>
+            <TrendLine values={samples} palette={palette} />
+            {samples.length >= 2 && <Text style={styles.metricLabel}>Since connecting</Text>}
           </View>
           <View style={styles.cardDivider} />
           <View style={styles.secondaryMetrics}>
             <View style={styles.secondaryMetric}>
-              <View style={styles.metricLabelRow}>
-                <MetricIcon kind="humidity" color={palette.muted} />
-                <Text style={styles.metricLabel}>Humidity</Text>
-              </View>
-              <Text style={styles.metricValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
+              <Text style={styles.metricLabel}>Simulated fan</Text>
+              <Text style={styles.metricValue}>{reading ? `${reading.fanSpeedPct}%` : '—'}</Text>
             </View>
             <View style={styles.verticalDivider} />
             <View style={styles.secondaryMetric}>
-              <Text style={styles.metricLabel}>Simulated fan</Text>
-              <Text style={styles.metricValue}>{reading ? `${reading.fanSpeedPct}%` : '—'}</Text>
+              <Text style={styles.metricLabel}>Simulated airflow</Text>
+              <Text style={styles.metricValue}>{ventState}</Text>
             </View>
           </View>
           {reading && statusWarning && <Text style={styles.lastKnown}>Last sample {Math.floor(sampleAgeMs / 1000)}s ago · last known values</Text>}
@@ -126,26 +125,22 @@ function createStyles(colors: Palette) {
     sourceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     sourceDot: { width: 7, height: 7, borderRadius: radius.pill, backgroundColor: colors.greenText },
     sourceText: { ...text.label, color: colors.greenText },
-    houseCard: { position: 'relative', overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: spacing.xl },
+    houseCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: spacing.xl },
     pressed: { opacity: 0.84 },
-    houseArt: { position: 'absolute', width: 118, height: 82, right: 21, top: 43, tintColor: colors.greenText, opacity: 0.38 },
-    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    houseTitle: { ...text.heading, color: colors.ink },
-    openCircle: { width: 35, height: 35, borderWidth: 1, borderColor: colors.greenText, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-    openCircleArrow: { ...text.heading, fontWeight: '400', color: colors.greenText },
-    statusPill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: spacing.sm, marginTop: spacing.md, minHeight: 30, paddingHorizontal: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.greenSurface },
-    statusPillWarning: { backgroundColor: colors.warningSurface },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
+    houseLabel: { ...text.label, color: colors.ink },
+    updated: { ...text.caption, color: colors.muted, flexShrink: 1, textAlign: 'right' },
+    statusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.lg },
     statusDot: { width: 7, height: 7, borderRadius: radius.pill },
     liveDot: { backgroundColor: colors.greenText },
     waitingDot: { backgroundColor: colors.muted },
     warningDot: { backgroundColor: colors.warningInk },
     statusText: { ...text.label, color: colors.ink },
     statusTextWarning: { color: colors.warningInk },
-    primaryMetric: { marginTop: spacing.xxl, marginBottom: spacing.lg },
+    trend: { marginTop: spacing.lg, marginBottom: spacing.lg, gap: spacing.xs },
     temperature: { ...text.display, color: colors.ink },
     temperatureCompact: displayCompact,
     temperatureUnit: { ...text.title, color: colors.greenText },
-    metricLabelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     metricLabel: { ...text.caption, color: colors.muted },
     cardDivider: { height: 1, backgroundColor: colors.border },
     secondaryMetrics: { flexDirection: 'row', paddingVertical: spacing.lg, gap: spacing.lg },
