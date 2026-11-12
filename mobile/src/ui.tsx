@@ -28,6 +28,12 @@ export type Palette = {
   heroLine: string;
   heroPill: string;
   onHeroPill: string;
+  chatBackground: string;
+  chatSurface: string;
+  chatBubble: string;
+  chatLine: string;
+  chatField: string;
+  chatMuted: string;
   forestLine: string;
   warningSurface: string;
   warningInk: string;
@@ -64,6 +70,13 @@ const lightPalette: Palette = {
   heroLine: '#4A7259',
   heroPill: '#DDEBD0',
   onHeroPill: '#17432B',
+  // Buddy chat: warm neutrals so only the lime Send action is green. Ink 13.7:1 on page, 12.4:1 on user bubble; field outline 3.3:1.
+  chatBackground: '#F7F7F4',
+  chatSurface: '#FFFFFF',
+  chatBubble: '#ECECE7',
+  chatLine: '#D8D9D2',
+  chatField: '#8C8F87',
+  chatMuted: '#5B5F58',
   forestLine: '#3E5E4A',
   warningSurface: '#F6DCC8',
   warningInk: '#6B3424',
@@ -99,6 +112,12 @@ const darkPalette: Palette = {
   heroLine: '#4A7259',
   heroPill: '#DDEBD0',
   onHeroPill: '#17432B',
+  chatBackground: '#161917',
+  chatSurface: '#1F2321',
+  chatBubble: '#2B2E2C',
+  chatLine: '#3F4440',
+  chatField: '#7E847F',
+  chatMuted: '#B4B8B2',
   forestLine: '#3E5E4A',
   warningSurface: '#4F3428',
   warningInk: '#FFD9C2',

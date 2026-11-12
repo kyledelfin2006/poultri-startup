@@ -101,6 +101,8 @@ Audited 2026-11-12: no gradients, blur, glow shadows, or decorative art (the log
 
 Home follows the hero-card spec (2026-11-12): a solid deep green card (`hero` #17432B, both themes) with the temperature in white Nunito ExtraBold, the unit, house line drawing, and thin trend bars in lime #CFF54A, a dashed white setpoint line, a pale green "Connected" pill with a check mark, Humidity, and Simulated fan with a three-block meter and the airflow label (ESP32 relay ON/OFF fills all or no blocks). The header uses an outline gear, and the selected tab is a deep green circle holding a lime icon. The spec overrides the earlier one-lime-per-screen and no-decorative-drawing choices on Home: lime now also marks the unit, drawing, trend, and selected tab. Hero text pairs: white 11.2:1, lime 9.0:1, muted 7.8:1, pill text 9.0:1.
 
+Buddy uses warm neutral chat tokens (`chat*` in `ui.tsx`): off-white page, white Buddy bubbles and suggestion chips, light grey user bubbles, grey input outline (3.3:1), and neutral captions, so the lime Send button and the logo are its only green. Ink is 13.7:1 on the page and 12.4:1 on user bubbles.
+
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.

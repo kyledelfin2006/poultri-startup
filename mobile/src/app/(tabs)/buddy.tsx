@@ -81,7 +81,7 @@ export default function BuddyScreen() {
               onChangeText={setDraft}
               onSubmitEditing={send}
               placeholder="Ask about the readings"
-              placeholderTextColor={palette.quiet}
+              placeholderTextColor={palette.chatMuted}
               returnKeyType="send"
               style={styles.input}
               value={draft}
@@ -99,29 +99,29 @@ export default function BuddyScreen() {
 
 function createStyles(colors: Palette) {
   return StyleSheet.create({
-    safe: { flex: 1, backgroundColor: colors.background },
+    safe: { flex: 1, backgroundColor: colors.chatBackground },
     flex: { flex: 1 },
     header: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.lg, paddingBottom: space.md },
     logo: { width: 44, height: 44 },
     headerText: { flex: 1, gap: space.xs },
     title: { ...type.heading, color: colors.ink },
-    sub: { ...type.caption, color: colors.muted },
+    sub: { ...type.caption, color: colors.chatMuted },
     messages: { paddingHorizontal: space.xl, paddingVertical: space.md, gap: space.md },
     bubble: { maxWidth: '86%', borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
-    buddyBubble: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-    // Lime stays on the send action only; user bubbles use the quiet green surface.
-    userBubble: { alignSelf: 'flex-end', backgroundColor: colors.greenSurface, borderWidth: 1, borderColor: colors.border },
+    buddyBubble: { alignSelf: 'flex-start', backgroundColor: colors.chatSurface, borderWidth: 1, borderColor: colors.chatLine },
+    // Lime stays on the send action only; everything else on Buddy is neutral.
+    userBubble: { alignSelf: 'flex-end', backgroundColor: colors.chatBubble, borderWidth: 1, borderColor: colors.chatLine },
     bubbleText: { ...type.body, color: colors.ink },
     userText: { color: colors.ink },
     footer: { paddingHorizontal: space.xl, paddingTop: space.sm, paddingBottom: space.md, gap: space.md },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-    chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: colors.greenSurface },
-    chipPressed: { backgroundColor: colors.border },
-    chipText: { ...type.label, color: colors.greenText },
+    chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: colors.chatSurface, borderWidth: 1, borderColor: colors.chatLine },
+    chipPressed: { backgroundColor: colors.chatBubble },
+    chipText: { ...type.label, color: colors.ink },
     inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-    input: { flex: 1, minHeight: 52, borderColor: colors.inputBorder, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: space.lg, backgroundColor: colors.surface, color: colors.ink, ...type.body },
+    input: { flex: 1, minHeight: 52, borderColor: colors.chatField, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: space.lg, backgroundColor: colors.chatSurface, color: colors.ink, ...type.body },
     send: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.lime },
     sendPressed: { backgroundColor: colors.limePressed },
-    note: { ...type.caption, color: colors.muted },
+    note: { ...type.caption, color: colors.chatMuted },
   });
 }
