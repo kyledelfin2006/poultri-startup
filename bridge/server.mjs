@@ -1,19 +1,24 @@
 import { createServer } from 'node:http';
 import { networkInterfaces } from 'node:os';
+import { createHistory } from './history.mjs';
 
-const PORT = 4174;
+const PORT = Number(process.env.PORT ?? 4174);
 const MAX_BODY_BYTES = 1024;
+const MAX_REPLAY_BODY_BYTES = 128 * 1024; // up to 1440 replay points
 let latestReading = null;
+const history = createHistory();
 
 function json(response, status, value) {
   response.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    // Web preview runs on another origin; the bridge is local-only, so any origin may read it.
+    'access-control-allow-origin': '*',
   });
   response.end(JSON.stringify(value));
 }
 
-function readJson(request) {
+function readJson(request, maxBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -21,7 +26,7 @@ function readJson(request) {
 
     request.on('data', (chunk) => {
       size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
+      if (size > maxBytes) {
         tooLarge = true;
         chunks.length = 0;
       } else if (!tooLarge) {
@@ -47,6 +52,16 @@ function readJson(request) {
 async function route(request, response) {
   const url = new URL(request.url ?? '/', 'http://localhost');
 
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+    });
+    response.end();
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/health') {
     json(response, 200, { ok: true });
     return;
@@ -54,6 +69,32 @@ async function route(request, response) {
 
   if (request.method === 'GET' && url.pathname === '/api/reading') {
     json(response, 200, { reading: latestReading });
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/history') {
+    const hours = Number(url.searchParams.get('hours') ?? 24);
+    if (!Number.isFinite(hours) || hours < 1 || hours > 24) {
+      json(response, 400, { error: 'hours must be between 1 and 24' });
+      return;
+    }
+    json(response, 200, { points: history.query(hours) });
+    return;
+  }
+
+  // Labeled demo data: bridge/seed.mjs posts a replayed simulated sequence here. The app marks it as replayed.
+  if (request.method === 'POST' && url.pathname === '/api/history/replay') {
+    const value = await readJson(request, MAX_REPLAY_BODY_BYTES);
+    const added = history.addReplay(value?.points);
+    console.log(`Replay: added ${added} simulated sample points (marked as replayed).`);
+    json(response, 201, { ok: true, added });
+    return;
+  }
+
+  if (request.method === 'DELETE' && url.pathname === '/api/history/replay') {
+    const removed = history.clearReplay();
+    console.log(`Replay: removed ${removed} replayed points.`);
+    json(response, 200, { ok: true, removed });
     return;
   }
 
@@ -71,6 +112,7 @@ async function route(request, response) {
       return;
     }
 
+    history.add(value.temperatureC);
     latestReading = {
       source,
       temperatureC: value.temperatureC,

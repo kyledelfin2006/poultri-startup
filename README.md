@@ -34,10 +34,10 @@ This repository demonstrates one small part of Poultri: **an ESP32/DHT22 sends t
 
 - `arduino/PoultriESP32/PoultriESP32.ino` reads a physical DHT22 on GPIO 4, switches a relay on GPIO 26 ON at 32°C or above and OFF below 32°C, and sends samples every 2.5 seconds over Wi-Fi to the local Node bridge. For a laptop-only USB route, `bridge/serial-forwarder.ps1` forwards the sketch's serial readings to the same bridge.
 - Wokwi remains an optional simulated ESP32/DHT22 source for repeatable temperature changes.
-- The mobile app opens to a House 1 overview with temperature, humidity, source-aware fan state, connection state, and inspection-prompt state. Its light and dark screens pair deep evergreen and vivid leaf-green accents from the Poultri identity with pale green-tinted and white surfaces; yellow-green marks attention states. Typography pairs a condensed display face for headings and key readings with the system sans-serif for instructions and controls. The official logo and wordmark are unchanged. The inspection rule remains active, while Home and House 1 detail omit numeric setpoint display and setpoint-specific explanatory copy. Open House 1 for sample age, inspection prompt and acknowledgement, fan-relay status, and app-only vent visual. **Bridge setup** connects the app to the laptop bridge. The source label identifies local ESP32/DHT22 hardware or Wokwi simulation.
+- The mobile app has **Home**, **History**, and **Buddy** tabs plus **Settings**. Home shows House 1 with temperature, humidity, source-aware fan state, connection state, a trend since connecting, and the inspection state (No inspection needed, Inspect House 1, Acknowledged, Recovered). History charts the bridge's recorded temperature; Buddy is a scripted helper with no AI model. The demo setpoint shown comes from each reading (25°C from Wokwi, 32°C from the local ESP32). Headings use a rounded sans (Nunito) and icons come from Ionicons; the official logo and wordmark are unchanged. The source label identifies local ESP32/DHT22 hardware or Wokwi simulation.
 - The first fresh reading after connecting or resetting is saved as session context. A reading at or above the **32°C threshold** activates both the inspection prompt and physical fan relay. Acknowledgement displays for 60 seconds; a fresh below-threshold reading then clears the prompt, while an active alert returns to INSPECT. An unacknowledged recovered prompt remains until reset. The app reports the physical relay command as ON/OFF; Wokwi mirrors the same threshold with its simulated fan LED.
 - On House 1 detail, the fan drawing follows the physical ESP32 relay command or the Wokwi simulated percentage. The vent remains an app-only visual. Both visuals stop for stale or disconnected readings; fan animation also respects reduced-motion settings. The app reports the relay command but does not measure fan rotation.
-- Acknowledge the prompt and lower the temperature below 32°C to show recovery. Open **Bridge setup** and tap **Reset session** to clear the app session.
+- Acknowledge the prompt and lower the temperature below 32°C to show recovery. Open **Settings**, tap **Reset session**, then **Reset** to confirm, to clear the app session.
 - Humidity is display-only. All values and the alert rule are illustrative.
 
 **Rule note:** the concept note does not define a numerical temperature threshold or fan-control rule. The shared **32°C inspection and relay threshold is a demo-only choice**, not a farm setting or poultry-health limit. The ESP32 controls the local relay; the app only reports its command state. Wokwi's LED remains a simulated indicator.
@@ -167,6 +167,8 @@ npx.cmd expo start
 Scan the QR code with Expo Go and keep this terminal running. For connected readings on an Android phone, use the preview APK above; for connected readings on the emulator, use the local Android build.
 ### E. Start the bridge and connect the app (each demo)
 
+Optional: to show a full History chart before Wokwi has run for long, run `npm.cmd run seed` in `bridge/` after the bridge starts. It loads a fixed 24-hour **simulated** sequence that the app labels as replayed sample data. `npm.cmd run seed -- --clear` removes it; restarting the bridge also clears it.
+
 1. Open a new PowerShell window at the repository folder, then start the bridge:
 
    ~~~powershell
@@ -185,10 +187,10 @@ Leave this window open. The bridge prints possible laptop addresses, for example
    ~~~
 
    Leave the USB forwarder running; it reads COM7 and posts the physical sample to the laptop bridge. If using Wokwi, leave its simulator running instead.
-5. Open the Poultri app, tap the **House 1** overview card, then tap **Bridge setup**. Enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect to bridge**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
+5. Open the Poultri app and tap the settings button on Home (or scroll to **Connection** at the bottom of House 1). Enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect to bridge**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
 6. Wait for the app to show a reading and its source label. The first fresh reading becomes the session reference.
 7. The physical sensor reports actual room temperature and humidity; it cannot be set from the app. At **32.0°C**, the inspection prompt appears and the ESP32 switches the fan relay ON; below 32.0°C both clear/OFF. The app shows the relay command as ON/OFF. Use Wokwi for repeatable simulated transitions at the same threshold.
-8. On the House 1 detail screen, tap **Acknowledge** if a prompt is active. When the reading falls below **32.0°C**, the app shows **Reading recovered**; after 60 seconds an acknowledged prompt clears to **No inspection prompt**. An unacknowledged prompt remains until **Bridge setup → Reset session**.
+8. On the House 1 detail screen, tap **Acknowledge** if a prompt is active. When the reading falls below **32.0°C**, the app shows **Recovered**; after 60 seconds an acknowledged prompt clears to **No inspection needed**. An unacknowledged prompt remains until **Settings → Reset session → Reset**.
 
 The physical sketch samples every 2.5 seconds, Wokwi samples every two seconds, and the app checks the bridge every second. Allow a few seconds for each reading to appear.
 
@@ -206,7 +208,7 @@ There is no single control that resets the sensor source, bridge, and app togeth
 
 1. Wait for the physical reading to update, or restart the Wokwi simulation / lower its DHT22 below the alert trigger.
 2. Wait for a fresh reading in the app.
-3. Open House 1, tap **Bridge setup**, then tap **Reset session**.
+3. Open **Settings** from Home, tap **Reset session**, then tap **Reset** to confirm.
 4. Let the physical sensor report its next reading; use Wokwi controls if you need an exact repeatable threshold value.
 
 Keep the bridge running between runs. The next sensor POST replaces its latest reading; the app reset clears the app's session reference and prompt.

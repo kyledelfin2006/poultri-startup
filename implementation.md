@@ -11,9 +11,10 @@ This is a demonstration prototype, not a farm-monitoring product. A local DHT22 
 ## Implemented in this build
 
 - `mobile/src/app/index.tsx` and `mobile/src/app/house-1.tsx`: House 1 overview and detail screens. The overview presents temperature, humidity, source-aware fan state, data status, and prompt state in a deep evergreen card with a decorative house line drawing. Physical samples show the ESP32 relay command as ON/OFF; Wokwi samples show simulated percentage. The detail presents a temperature hero, sample age, inspection state, a fan drawing that follows relay/simulation state, an app-only vent visual, and a compact bridge entry. Both inspection logic and the physical relay use 32°C, without a demo-setpoint badge on either screen. The fan drawing stops for stale/disconnected data and reduced motion.
-- `mobile/src/app/bridge-setup.tsx`: separate local bridge URL, connection status and controls, and session reset screen.
+- `mobile/src/app/bridge-setup.tsx`: redirects to Settings, which holds the bridge URL, connection status and controls, and the confirmed session reset (merged from `ui-visual-accessibility`).
 - `mobile/src/demo-session.tsx`: shared bridge polling and session state, so navigation retains readings, the reference sample, acknowledgement, recovery, and reset state.
-- `mobile/src/ui.tsx`: shared light and dark Poultri green palettes, yellow-green attention colors, platform display and body typefaces, unchanged logo and wordmark, and common screen controls.
+- `mobile/src/ui.tsx`: shared light and dark palettes, the type scale (Nunito ExtraBold headings), Ionicons-based chevron and status icons, unchanged logo and wordmark, and common screen controls.
+- `bridge/server.mjs`: sends `access-control-allow-origin: *` and answers `OPTIONS` preflight so the Expo web preview (`npx.cmd expo start --web`) can reach the bridge from the browser.
 - `mobile/app.json` and `mobile/src/app/_layout.tsx`: support portrait and landscape, enable Android predictive Back, and configure the SDK-matched Expo System UI module for automatic appearance.
 - `mobile/plugins/with-local-bridge-http.js`: Expo config plugin for Android local-LAN HTTP in the preview APK.
 - `bridge/server.mjs`: dependency-free Node HTTP bridge on port 4174 with health, latest-reading, and input validation for sensor readings, setpoint, alert state, and fan percentage.
@@ -77,6 +78,22 @@ These historical results are retained for context; they were not all rerun on 20
 On 2026-10-18, the explicit external gateway override was removed from `wokwi.toml`. After stopping and starting Wokwi for VS Code 4.0, its terminal showed repeated `Bridge POST status: 201`; the bridge returned the 42.6°C/60% sample; and the Android emulator displayed that sample, 100% simulated fan, and the inspection prompt. This verifies live Wokwi-to-emulator delivery for that run. Physical-phone delivery, sensor slider transitions, and EAS APK creation remain unverified.
 
 The Android bundle export used Expo's `--no-bytecode` option because the sandbox denied Hermes bytecode output to its temporary directory. This validates Metro bundling, not the final APK build.
+
+## Tabs, history, and Buddy (branch `ui-visual-accessibility`)
+
+Added: Home, History, and Buddy tabs plus a Settings screen; bridge `/api/history` with an in-memory 24-hour record (`bridge/history.mjs`); a bar-chart History screen with 6h/12h/24h and min/average/max; an airflow label derived from fan percentage; and a scripted Buddy (`mobile/src/buddy.ts`, no AI model). Checked: `tsc`, `expo lint`, `npm test` in `bridge/` and `mobile/`, an Android bundle export, and the history endpoint against a local bridge. Not checked: any screen on an emulator or phone, and a run against the live Wokwi simulation.
+
+## Replay demo data (branch `ui-visual-accessibility`)
+
+Added: `bridge/seed.mjs` (`npm run seed`) posts a fixed 24-hour simulated sequence (288 points, one per 5 minutes) to `POST /api/history/replay`; `--clear` calls `DELETE /api/history/replay`. The bridge tags every history point `live` or `replay`. History shows "Includes replayed sample data" with the replayed count whenever replayed points are in range, and Buddy's summary says how many points are replayed. Unlabeled points from an older bridge are treated as replayed. Checked 2026-11-12: `npm test` in `bridge/` (6 tests) and `mobile/` (6 tests), `tsc`, `expo lint`, and the replay, label, Buddy summary, and clear in the web preview. Not checked on a phone or emulator.
+
+## Chart, icons, font, and copy (branch `ui-visual-accessibility`)
+
+Approved packages: `react-native-svg` (History line and area chart; gaps in data break the line instead of bridging it), `@expo/vector-icons` (Ionicons for the tab, settings, chevron, and status icons), and `@expo-google-fonts/nunito` (Nunito ExtraBold for the display, title, and heading styles, loaded in `app/_layout.tsx`; body text stays the system font). Copy uses one state vocabulary: No inspection needed, Inspect House 1, Acknowledged, Recovered; "demo setpoint" replaces "simulation setpoint"; "Wokwi simulated data" and "Reset session" are unchanged. Checked 2026-11-12: `npm test` in `mobile/` (7 tests), `tsc`, `expo lint`, and the web preview in light and dark. Not checked on a phone or emulator.
+
+## Reset confirmation and Buddy claims (branch `ui-visual-accessibility`)
+
+**Reset session** now asks first: a danger-token panel says "Reset clears the inspection prompt and session reference." with **Reset** and **Cancel**. Buddy states only values the app holds: the reading reply reports the prompt state the app tracks (not one inferred from temperature), the summary says the bridge "holds" its points, and why/what-to-do questions get a reply that gives no cause, diagnosis, or flock action. Checked 2026-11-12: `npm test` in `mobile/` (12 tests), `tsc`, `expo lint`, and the reset flow in the web preview.
 
 ## Follow-up work
 

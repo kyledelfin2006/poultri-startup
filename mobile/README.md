@@ -1,6 +1,6 @@
 # Poultri mobile demo
 
-Expo / React Native TypeScript demo app for a local ESP32/DHT22 sensor or Wokwi simulation through the laptop bridge. It opens to a House 1 overview with temperature, humidity, app-only simulated fan percentage, and connection/prompt state. Its light and dark screens pair deep evergreen and vivid leaf-green accents from the Poultri identity with pale green-tinted and white surfaces; yellow-green marks attention states. A built-in condensed display face adds character to headings and readings; the normal system sans-serif keeps instructions and controls easy to scan. No font dependency is added. The supplied logo and wordmark are unchanged. Open House 1 to see the demo setpoint, inspection prompt, and app-only fan and vent panel. A compact **Bridge setup** button opens a separate screen for the local bridge URL, connection, and session reset. The fan drawing is still at 0% and spins at 50% or 100%; the vent follows the same percentage: closed, half-open, or fully open. Both show a dash while waiting and mark last-known values stale or disconnected. No physical fan, vent, relay, or servo is connected or controlled. The house line drawing is decorative. Readings are local prototype data, not farm validated.
+Expo / React Native TypeScript demo app for a local ESP32/DHT22 sensor or Wokwi simulation through the laptop bridge. It has Home, History, and Buddy tabs plus Settings, where the bridge URL, connection, and reset (with confirmation) live. Home shows House 1 with temperature, humidity, source-aware fan state, connection and inspection state, and a trend since connecting; History charts the bridge's recorded temperature; Buddy is a scripted helper with no AI model. Headings use Nunito and icons use Ionicons; the supplied logo and wordmark are unchanged. On House 1 detail the Wokwi fan drawing spins at 50% or 100%, a local ESP32 shows its fan relay as ON/OFF, and the vent stays an app-only visual. Readings are local prototype data, not farm validated.
 
 See the root [MVP requirements](../mvp-requirements.md) and [build guide](../build-requirements.md) for the demo flow, network setup, and acceptance criteria.
 
@@ -15,7 +15,17 @@ npx.cmd expo start
 
 Scan the QR code with Expo Go. Keep the development server running while using the app.
 
-Open the **House 1** overview card, tap **Bridge setup**, then enter the laptop's private Wi-Fi IPv4 URL with port `4174` (for example, `http://192.168.1.20:4174`) and tap **Connect to bridge**. Keep the phone, laptop, and ESP32 on the same private Wi-Fi. The physical sender sketch is in `../arduino/PoultriESP32/`; Wokwi remains an optional source. See the root [build guide](../build-requirements.md) for complete setup.
+Tap the settings button on Home, then enter the laptop's private Wi-Fi IPv4 URL with port `4174` (for example, `http://192.168.1.20:4174`) and tap **Connect to bridge**. Keep the phone, laptop, and ESP32 on the same private Wi-Fi. The physical sender sketch is in `../arduino/PoultriESP32/`; Wokwi remains an optional source. See the root [build guide](../build-requirements.md) for complete setup.
+
+## Preview in a browser
+
+For quick UI edits on the laptop, run the web build:
+
+```powershell
+npx.cmd expo start --web
+```
+
+Open http://localhost:8081, open **House 1**, and enter `http://localhost:4174` as the bridge URL. The bridge allows cross-origin requests so the browser can reach it. The browser preview is for UI work only; use Expo Go, the emulator, or the APK for the demo.
 
 ## Build an Android APK
 

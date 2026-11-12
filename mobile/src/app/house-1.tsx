@@ -12,8 +12,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ConnectionSection } from '../connection';
 import { useDemoSession } from '../demo-session';
-import { BrandHeader, displayFont, MetricIcon, Palette, usePalette } from '../ui';
+import { ActionButton, BrandHeader, Chevron, MetricIcon, Palette, radius, space, type, usePalette } from '../ui';
 
 export default function HouseDetailScreen() {
   const router = useRouter();
@@ -22,14 +23,13 @@ export default function HouseDetailScreen() {
   const compact = width < 370 || fontScale >= 1.3;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const {
-    connected, reading, baseline, alertRecord, sampleAgeMs, stale, status,
-    statusDescription, acknowledge,
+    connected, reading, baseline, alertRecord, sampleAgeMs, stale, status, statusDescription, acknowledge,
   } = useDemoSession();
   const fanSpeedPct = reading?.fanSpeedPct;
+  // From iot: a local ESP32 drives a fan relay (on/off), not a simulated fan percentage.
   const physicalFan = reading?.source === 'Local ESP32 + DHT22';
   const fanValue = !reading ? '—' : physicalFan ? (fanSpeedPct ? 'ON' : 'OFF') : `${fanSpeedPct}%`;
   const statusWarning = stale || status.startsWith('Disconnected');
-  const connectionWarning = status === 'Not connected' || statusWarning;
   const [reduceMotion, setReduceMotion] = useState(true);
   const [fanRotation] = useState(() => new Animated.Value(0));
   const fanAngle = useMemo(() => fanRotation.interpolate({
@@ -85,43 +85,40 @@ export default function HouseDetailScreen() {
           accessibilityRole="button"
           accessibilityLabel="Back to house overview"
           onPress={() => router.canGoBack() ? router.back() : router.replace('/')}
-          style={styles.backButton}
+          hitSlop={space.sm}
+          style={({ pressed }) => [styles.backButton, pressed && styles.backPressed]}
         >
-          <View style={styles.backCircle}><Text style={styles.backArrow}>‹</Text></View>
+          <View style={styles.backCircle}><Chevron color={palette.greenText} size={8} direction="left" /></View>
           <Text style={styles.backText}>House overview</Text>
         </Pressable>
 
         <View style={styles.heading}>
           <View style={styles.headingRow}>
             <Text accessibilityRole="header" style={styles.title}>House 1</Text>
-            <View style={[styles.connectionState, connectionWarning && styles.connectionStateWarning]}>
-              <View style={[styles.connectionDot, connectionWarning && styles.connectionDotWarning]} />
-              <Text style={[styles.connectionText, connectionWarning && styles.connectionTextWarning]}>{status}</Text>
+            <View style={[styles.statusPill, statusWarning && styles.statusPillWarning]}>
+              <View style={[styles.connectionDot, statusWarning && styles.connectionDotWarning]} />
+              <Text style={[styles.connectionText, statusWarning && styles.connectionTextWarning]}>{status}</Text>
             </View>
           </View>
           <Text style={styles.sourceText}>{reading?.source ?? 'Waiting for sensor data'}</Text>
         </View>
 
         <View style={styles.readings}>
-          <View style={styles.heroTop}>
-            <Text style={styles.heroEyebrow}>CURRENT READING</Text>
-            <View style={styles.sourceBadge}><View style={styles.sourceDot} /><Text style={styles.sourceBadgeText}>{!reading ? 'WAITING' : reading.source === 'Wokwi simulated data' ? 'SIMULATED' : 'HARDWARE'}</Text></View>
+          <View style={styles.readingLabelRow}>
+            <MetricIcon kind="temperature" color={palette.muted} />
+            <Text style={styles.readingLabel}>Temperature</Text>
           </View>
-          <View style={[styles.heroMain, compact && styles.heroMainCompact]}>
-            <View style={styles.temperatureBlock}>
-              <View style={styles.readingLabelRow}>
-                <MetricIcon kind="temperature" color={palette.onForestMuted} />
-                <Text style={styles.readingLabel}>Temperature</Text>
-              </View>
-              <Text style={[styles.temperature, compact && styles.temperatureCompact]} accessibilityLabel={reading ? `Temperature ${reading.temperatureC.toFixed(1)} degrees Celsius` : 'Temperature unavailable'}>
-                {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
-              </Text>
-            </View>
+          <Text style={[styles.temperature, compact && styles.temperatureCompact]} accessibilityLabel={reading ? `Temperature ${reading.temperatureC.toFixed(1)} degrees Celsius` : 'Temperature unavailable'}>
+            {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
+          </Text>
+          <View style={styles.setpointRow}>
+            <Text style={styles.setpointLabel}>Demo setpoint</Text>
+            <Text style={styles.setpointValue}>{reading?.setpointC.toFixed(1) ?? '25.0'}°C</Text>
           </View>
           <View style={styles.secondaryReadings}>
             <View style={styles.secondaryReading}>
               <View style={styles.readingLabelRow}>
-                <MetricIcon kind="humidity" color={palette.onForestMuted} />
+                <MetricIcon kind="humidity" color={palette.muted} />
                 <Text style={styles.secondaryLabel}>Humidity</Text>
               </View>
               <Text style={styles.secondaryValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
@@ -132,11 +129,8 @@ export default function HouseDetailScreen() {
               <Text style={styles.secondaryValue}>{fanValue}</Text>
             </View>
           </View>
-          <View style={styles.sampleRow}>
-            <Text style={styles.sampleAge}>{reading ? `Updated ${Math.floor(sampleAgeMs / 1000)}s ago${stale ? ' · stale' : ''}` : 'Waiting for a sensor reading'}</Text>
-            {statusWarning && <Text style={styles.statusDescription}>{stale ? 'LAST KNOWN' : 'UNAVAILABLE'}</Text>}
-          </View>
-          {statusWarning && <Text style={styles.statusDescriptionDetail}>{statusDescription}</Text>}
+          <Text style={styles.sampleAge}>{reading ? `Updated ${Math.floor(sampleAgeMs / 1000)}s ago${stale ? ' · stale' : ''}` : 'Waiting for sensor data'}</Text>
+          {statusWarning && <Text style={styles.statusDescription}>{statusDescription}</Text>}
         </View>
 
         <View style={styles.inspectionSection} accessibilityLiveRegion="polite">
@@ -146,33 +140,36 @@ export default function HouseDetailScreen() {
           </View>
           {!alertRecord ? (
             <View style={styles.clearPanel}>
-              <View style={styles.promptIcon}><View style={styles.promptDot} /></View>
-              <Text style={styles.clearTitle}>No inspection prompt</Text>
-              <Text style={styles.clearBadge}>CLEAR</Text>
+              <Text style={styles.clearTitle}>No inspection needed</Text>
+              <View style={styles.clearBadge}><Text style={styles.clearBadgeText}>Clear</Text></View>
             </View>
           ) : (
             <View style={[styles.alertPanel, alertRecord.recovered && styles.recoveredPanel]}>
               <View style={styles.alertHeading}>
                 <Text style={[styles.alertTitle, alertRecord.recovered && styles.recoveredTitle]}>
-                  {alertRecord.recovered ? 'Reading recovered' : 'Check House 1'}
+                  {alertRecord.recovered ? 'Recovered' : 'Inspect House 1'}
                 </Text>
-                <Text style={[styles.alertBadge, alertRecord.recovered && styles.recoveredBadge]}>{alertRecord.recovered ? 'RECOVERED' : alertRecord.acknowledged ? 'ACKNOWLEDGED' : 'INSPECT'}</Text>
+                {alertRecord.acknowledged && (
+                  <View style={[styles.alertBadge, alertRecord.recovered && styles.recoveredBadge]}>
+                    <Text style={[styles.alertBadgeText, alertRecord.recovered && styles.recoveredBadgeText]}>Acknowledged</Text>
+                  </View>
+                )}
               </View>
+              <Text style={[styles.alertDescription, alertRecord.recovered && styles.recoveredDescription]}>
+                {alertRecord.recovered ? `Below the ${reading?.setpointC.toFixed(1) ?? '25.0'}°C demo setpoint. Kept until Reset session.` : `Reached the ${reading?.setpointC.toFixed(1) ?? '25.0'}°C demo setpoint.`}
+              </Text>
               {!alertRecord.acknowledged && !alertRecord.recovered && (
-                <Pressable accessibilityRole="button" onPress={acknowledge} style={({ pressed }) => [styles.ackButton, pressed && styles.ackPressed]}>
-                  <Text style={styles.ackText}>Acknowledge</Text>
-                </Pressable>
+                <ActionButton title="Acknowledge" onPress={acknowledge} palette={palette} />
               )}
             </View>
           )}
         </View>
 
         <View style={styles.airflowCard}>
-          <Text style={styles.airflowTitle}>{physicalFan ? 'Fan relay status' : 'Airflow simulation'}</Text>
-          <Text style={styles.airflowSubtitle}>{physicalFan ? 'ESP32 switches the fan relay; the vent remains visual' : 'App-only visuals based on the demo fan value'}</Text>
+          <Text style={styles.airflowTitle}>{physicalFan ? 'Fan relay status' : 'Simulated airflow'}</Text>
           <View style={styles.airflowColumns}>
             <View style={styles.airflowColumn}>
-              <Text style={styles.airflowLabel}>{physicalFan ? 'Fan relay' : 'Fan'}</Text>
+              <Text style={styles.airflowLabel}>{physicalFan ? 'Fan relay' : 'Simulated fan'}</Text>
               <View style={styles.fanHousing} accessible={false}>
                 {reading ? (
                   <Animated.View style={[styles.fanRotor, { transform: [{ rotate: fanAngle }] }]}>
@@ -192,7 +189,7 @@ export default function HouseDetailScreen() {
             </View>
             <View style={styles.airflowDivider} />
             <View style={styles.airflowColumn}>
-              <Text style={styles.airflowLabel}>{physicalFan ? 'Vent visual' : 'Vent'}</Text>
+              <Text style={styles.airflowLabel}>{physicalFan ? 'Vent visual' : 'Simulated vent'}</Text>
               <View style={styles.ventFrame} accessible={false}>
                 {reading ? [0, 1, 2, 3].map((slat) => (
                   <Animated.View key={slat} style={[styles.ventSlat, { transform: [{ perspective: 300 }, { rotateX: ventAngle }] }]} />
@@ -205,22 +202,11 @@ export default function HouseDetailScreen() {
             </View>
           </View>
           <View style={styles.airflowBottomRule} />
-          <Text style={styles.airflowNote}>{physicalFan ? 'ESP32 relay controls the fan; app cannot verify fan rotation' : 'Visual only · no fan, vent, or servo connected'}</Text>
+          <Text style={styles.airflowNote}>{physicalFan ? 'ESP32 relay controls the fan; the app cannot verify fan rotation' : 'Visual only · no equipment connected'}</Text>
           {!!visualDataState && <Text style={styles.airflowDataState}>{visualDataState}</Text>}
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Open bridge setup. ${status}.`}
-          onPress={() => router.push('/bridge-setup')}
-          style={({ pressed }) => [styles.bridgeSetupLink, pressed && styles.bridgeSetupPressed]}
-        >
-          <View style={styles.bridgeSetupCopy}>
-            <Text style={styles.bridgeSetupTitle}>Bridge setup</Text>
-            <Text style={styles.bridgeSetupHint}>Connection and demo settings</Text>
-          </View>
-          <Text style={styles.bridgeSetupArrow}>›</Text>
-        </Pressable>
+        <View style={styles.connectionWrap}><ConnectionSection /></View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -229,89 +215,76 @@ export default function HouseDetailScreen() {
 function createStyles(colors: Palette) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
-    content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: 22, paddingTop: 15, paddingBottom: 36 },
-    backButton: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'flex-start', minHeight: 48, marginTop: 9 },
-    backCircle: { width: 36, height: 36, borderWidth: 1, borderColor: colors.border, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-    backArrow: { color: colors.greenText, fontSize: 26, lineHeight: 30, marginTop: -3 },
-    backText: { color: colors.greenText, fontSize: 14, fontWeight: '700' },
-    heading: { marginTop: 14, marginBottom: 17, gap: 5 },
-    headingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-    title: { color: colors.ink, fontFamily: displayFont, fontSize: 34, fontWeight: '800', letterSpacing: -0.6 },
-    sourceText: { color: colors.muted, fontSize: 13, marginTop: 2 },
-    connectionState: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 1, minHeight: 32, paddingHorizontal: 10, backgroundColor: colors.greenSurface, borderRadius: 18 },
-    connectionStateWarning: { backgroundColor: colors.warningSurface },
+    content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: space.xl, paddingTop: space.lg, paddingBottom: space.xxl },
+    backButton: { flexDirection: 'row', alignItems: 'center', gap: space.sm, alignSelf: 'flex-start', minHeight: 44, marginTop: space.sm, paddingRight: space.md, borderRadius: radius.pill },
+    backPressed: { backgroundColor: colors.greenSurface },
+    backCircle: { width: 36, height: 36, borderWidth: 1.5, borderColor: colors.greenText, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+    backText: { ...type.label, color: colors.greenText },
+    heading: { marginTop: space.lg, marginBottom: space.xl, gap: space.xs },
+    headingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+    title: { ...type.title, color: colors.ink, flexShrink: 1 },
+    sourceText: { ...type.caption, color: colors.muted },
+    statusPill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.greenSurface, flexShrink: 1 },
+    statusPillWarning: { backgroundColor: colors.warningSurface },
     connectionDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.greenText },
     connectionDotWarning: { backgroundColor: colors.warningInk },
-    connectionText: { color: colors.greenText, fontSize: 12, fontWeight: '700', flexShrink: 1 },
+    connectionText: { ...type.caption, color: colors.greenText, fontWeight: '700', flexShrink: 1 },
     connectionTextWarning: { color: colors.warningInk },
-    readings: { backgroundColor: colors.forest, borderRadius: 24, padding: 21, overflow: 'hidden' },
-    heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-    heroEyebrow: { color: colors.onForestMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 },
-    sourceBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: colors.forestLine, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 6 },
-    sourceDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.onForestAccent },
-    sourceBadgeText: { color: colors.onForestMuted, fontSize: 9, fontWeight: '800', letterSpacing: 0.8 },
-    heroMain: { marginTop: 22, marginBottom: 19 },
-    heroMainCompact: { marginTop: 18 },
-    temperatureBlock: { minWidth: 0 },
-    readingLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    readingLabel: { color: colors.onForestMuted, fontSize: 13, fontWeight: '600' },
-    temperature: { color: colors.onForest, fontFamily: displayFont, fontSize: 82, lineHeight: 86, fontWeight: '800', letterSpacing: -1.7, marginTop: 7, fontVariant: ['tabular-nums'] },
-    temperatureCompact: { fontSize: 70, lineHeight: 74 },
-    temperatureUnit: { color: colors.onForestAccent, fontFamily: displayFont, fontSize: 29, letterSpacing: -0.3 },
-    secondaryReadings: { flexDirection: 'row', gap: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.forestLine },
-    secondaryReading: { flex: 1, gap: 7, minWidth: 0 },
-    secondaryDivider: { width: 1, backgroundColor: colors.forestLine },
-    secondaryLabel: { color: colors.onForestMuted, fontSize: 13 },
-    secondaryValue: { color: colors.onForest, fontFamily: displayFont, fontSize: 27, fontWeight: '800', fontVariant: ['tabular-nums'] },
-    sampleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 7, marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.forestLine },
-    sampleAge: { color: colors.onForestMuted, fontSize: 12 },
-    statusDescription: { color: colors.warningInk, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 },
-    statusDescriptionDetail: { color: colors.onForestMuted, fontSize: 12, lineHeight: 17, marginTop: 6 },
-    inspectionSection: { marginTop: 24 },
-    sectionHeadingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 12 },
-    sectionTitle: { color: colors.ink, fontFamily: displayFont, fontSize: 23, fontWeight: '800', letterSpacing: -0.2 },
-    reference: { color: colors.muted, fontSize: 12 },
-    clearPanel: { minHeight: 74, paddingHorizontal: 15, paddingVertical: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 19, flexDirection: 'row', alignItems: 'center', gap: 11 },
-    promptIcon: { width: 38, height: 38, borderRadius: 13, backgroundColor: colors.greenSurface, alignItems: 'center', justifyContent: 'center' },
-    promptDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: colors.greenText },
-    clearTitle: { color: colors.ink, fontSize: 15, fontWeight: '700', flex: 1, flexShrink: 1 },
-    clearBadge: { color: colors.greenText, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
-    alertPanel: { padding: 18, borderRadius: 19, backgroundColor: colors.alertSurface, borderWidth: 1, borderColor: colors.warningSurface, gap: 11 },
-    recoveredPanel: { backgroundColor: colors.greenSurface, borderColor: colors.greenSurface },
-    alertHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-    alertTitle: { color: colors.warningInk, fontFamily: displayFont, fontSize: 22, fontWeight: '800', flexShrink: 1 },
+    readings: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: space.lg },
+    readingLabelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+    readingLabel: { ...type.label, color: colors.ink },
+    temperature: { ...type.display, color: colors.ink, marginTop: space.md, fontVariant: ['tabular-nums'] },
+    temperatureCompact: { fontSize: 60, lineHeight: 70 },
+    temperatureUnit: { fontSize: 30, letterSpacing: -0.5, color: colors.greenText },
+    setpointRow: { minHeight: 44, backgroundColor: colors.greenSurface, borderRadius: radius.control, paddingHorizontal: space.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+    setpointLabel: { ...type.label, color: colors.ink },
+    setpointValue: { ...type.label, color: colors.ink, fontVariant: ['tabular-nums'] },
+    secondaryReadings: { flexDirection: 'row', gap: space.lg, marginTop: space.lg, paddingTop: space.lg, borderTopWidth: 1, borderTopColor: colors.border },
+    secondaryReading: { flex: 1, gap: space.sm, minWidth: 0 },
+    secondaryDivider: { width: 1, backgroundColor: colors.border },
+    secondaryLabel: { ...type.caption, color: colors.muted },
+    secondaryValue: { ...type.heading, color: colors.ink, fontVariant: ['tabular-nums'] },
+    sampleAge: { ...type.caption, color: colors.muted, marginTop: space.md },
+    statusDescription: { ...type.caption, color: colors.warningInk, marginTop: space.xs },
+    inspectionSection: { marginTop: space.xxl, gap: space.md },
+    sectionHeadingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.sm },
+    sectionTitle: { ...type.heading, color: colors.ink },
+    reference: { ...type.caption, color: colors.muted },
+    clearPanel: { minHeight: 56, paddingHorizontal: space.lg, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+    clearTitle: { ...type.body, color: colors.ink, fontWeight: '700', flexShrink: 1 },
+    clearBadge: { borderRadius: radius.pill, backgroundColor: colors.greenSurface, paddingHorizontal: space.md, paddingVertical: space.xs },
+    clearBadgeText: { ...type.caption, color: colors.greenText, fontWeight: '700' },
+    alertPanel: { padding: space.lg, borderRadius: radius.card, backgroundColor: colors.alertSurface, gap: space.md },
+    recoveredPanel: { backgroundColor: colors.greenSurface },
+    alertHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, flexWrap: 'wrap' },
+    alertTitle: { ...type.heading, color: colors.warningInk, flexShrink: 1 },
     recoveredTitle: { color: colors.ink },
-    alertBadge: { color: colors.warningInk, borderWidth: 1, borderColor: colors.warningInk, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, fontSize: 10, fontWeight: '800', letterSpacing: 0.4 },
-    recoveredBadge: { color: colors.greenText, borderColor: colors.greenText },
-    ackButton: { minHeight: 48, borderRadius: 14, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center', marginTop: 2, paddingHorizontal: 16 },
-    ackPressed: { opacity: 0.8 },
-    ackText: { color: colors.onForest, fontSize: 14, fontWeight: '800' },
-    airflowCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 22, padding: 19, marginTop: 20 },
-    airflowTitle: { color: colors.ink, fontFamily: displayFont, fontSize: 23, fontWeight: '800', letterSpacing: -0.2 },
-    airflowSubtitle: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 4, marginBottom: 18 },
-    airflowColumns: { flexDirection: 'row', gap: 15 },
-    airflowColumn: { flex: 1, minWidth: 0, alignItems: 'center', backgroundColor: colors.surfaceAlt, borderRadius: 17, padding: 13 },
+    alertBadge: { borderRadius: radius.pill, backgroundColor: colors.warningInk, paddingHorizontal: space.md, paddingVertical: space.xs },
+    recoveredBadge: { backgroundColor: colors.greenText },
+    alertBadgeText: { ...type.caption, color: colors.alertSurface, fontWeight: '700' },
+    recoveredBadgeText: { color: colors.background },
+    alertDescription: { ...type.body, color: colors.warningInk },
+    recoveredDescription: { color: colors.body },
+    airflowCard: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: space.lg, marginTop: space.xxl },
+    airflowTitle: { ...type.heading, color: colors.ink, marginBottom: space.lg },
+    airflowColumns: { flexDirection: 'row', gap: space.md },
+    airflowColumn: { flex: 1, minWidth: 0, alignItems: 'center' },
     airflowDivider: { width: 1, backgroundColor: colors.border },
-    airflowLabel: { color: colors.muted, fontSize: 12, fontWeight: '700', alignSelf: 'flex-start', marginBottom: 12 },
-    fanHousing: { width: 84, height: 84, borderRadius: 42, borderWidth: 4, borderColor: colors.greenText, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+    airflowLabel: { ...type.caption, color: colors.muted, alignSelf: 'flex-start', marginBottom: space.md },
+    fanHousing: { width: 88, height: 88, borderRadius: 44, borderWidth: 4, borderColor: colors.greenText, backgroundColor: colors.greenSurface, alignItems: 'center', justifyContent: 'center' },
     fanRotor: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
     fanArm: { position: 'absolute', width: 72, height: 72, alignItems: 'center' },
-    fanBlade: { width: 15, height: 24, marginTop: 4, borderRadius: 12, backgroundColor: colors.lime },
+    fanBlade: { width: 15, height: 24, marginTop: 4, borderRadius: 12, backgroundColor: colors.greenText },
     fanHub: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.greenText },
-    ventFrame: { width: 88, height: 84, borderRadius: 12, borderWidth: 3, borderColor: colors.greenText, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'space-around', paddingVertical: 8 },
-    ventSlat: { width: 65, height: 11, borderRadius: 5, backgroundColor: colors.greenText },
-    visualPlaceholder: { color: colors.muted, fontSize: 28 },
-    airflowValueRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', alignSelf: 'stretch', gap: 4, marginTop: 13 },
-    airflowState: { color: colors.ink, fontFamily: displayFont, fontSize: 17, fontWeight: '800', flexShrink: 1 },
-    airflowPercent: { color: colors.greenText, fontFamily: displayFont, fontSize: 19, fontWeight: '800', fontVariant: ['tabular-nums'] },
-    airflowBottomRule: { height: 1, backgroundColor: colors.border, marginTop: 17, marginBottom: 11 },
-    airflowNote: { color: colors.muted, fontSize: 11, lineHeight: 16 },
-    airflowDataState: { color: colors.warningInk, fontSize: 11, marginTop: 5 },
-    bridgeSetupLink: { minHeight: 68, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, marginTop: 20, paddingHorizontal: 17, paddingVertical: 12 },
-    bridgeSetupPressed: { opacity: 0.78 },
-    bridgeSetupCopy: { flex: 1, gap: 3 },
-    bridgeSetupTitle: { color: colors.ink, fontFamily: displayFont, fontSize: 18, fontWeight: '800' },
-    bridgeSetupHint: { color: colors.muted, fontSize: 12 },
-    bridgeSetupArrow: { color: colors.greenText, fontSize: 26, lineHeight: 28, marginLeft: 12 },
+    ventFrame: { width: 88, height: 88, borderRadius: radius.control, borderWidth: 3, borderColor: colors.greenText, backgroundColor: colors.greenSurface, alignItems: 'center', justifyContent: 'space-around', paddingVertical: space.sm },
+    ventSlat: { width: 64, height: 11, borderRadius: 2, backgroundColor: colors.greenText },
+    visualPlaceholder: { ...type.heading, color: colors.muted },
+    airflowValueRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', alignSelf: 'stretch', gap: space.xs, marginTop: space.md },
+    airflowState: { ...type.label, color: colors.ink, flexShrink: 1 },
+    airflowPercent: { ...type.label, color: colors.greenText, fontVariant: ['tabular-nums'] },
+    airflowBottomRule: { height: 1, backgroundColor: colors.border, marginTop: space.lg, marginBottom: space.md },
+    airflowNote: { ...type.caption, color: colors.muted },
+    connectionWrap: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: space.xxl, paddingTop: space.xl },
+    airflowDataState: { ...type.caption, color: colors.warningInk, marginTop: space.xs },
   });
 }

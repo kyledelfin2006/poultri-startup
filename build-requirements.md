@@ -19,7 +19,7 @@ flowchart LR
 
 - **Sensor source:** a physical ESP32/DHT22 sketch for Arduino IDE, or the existing simulated ESP32/DHT22/PWM LED in Wokwi. Both post the same reading contract. The physical ESP32 switches a relay on GPIO 26 at 32°C or above and turns it off below 32°C. Only Wokwi has a fan LED.
 - **Bridge:** one Node.js process using built-in modules only. It keeps the most recent valid sample in memory.
-- **Mobile:** Expo Router House 1 overview, detail, and bridge setup screens. The overview shows temperature, humidity, source-aware fan status, connection/data state, and prompt state. For physical samples the fan status reflects the ESP32 relay command; Wokwi keeps its simulated percentage. The inspection behavior uses the setpoint, but Home and House 1 detail do not display its numeric value or explanatory sentence. House 1 detail includes sample age, reference reading, prompt acknowledgement/recovery, fan/vent visuals, and a compact Bridge setup entry. The vent remains app-only. The separate bridge setup screen contains the local URL, connection controls, and reset. Shared in-memory session state survives route changes.
+- **Mobile:** Expo Router Home, History, and Buddy tabs, House 1 detail, and Settings (bridge URL, connection, and confirmed reset). The overview shows temperature, humidity, source-aware fan status, connection/data state, and prompt state. For physical samples the fan status reflects the ESP32 relay command; Wokwi keeps its simulated percentage. The inspection behavior uses the setpoint, but Home and House 1 detail do not display its numeric value or explanatory sentence. House 1 detail includes sample age, reference reading, prompt acknowledgement/recovery, fan/vent visuals, and a compact Bridge setup entry. The vent remains app-only. The separate bridge setup screen contains the local URL, connection controls, and reset. Shared in-memory session state survives route changes.
 - **Network paths:** physical ESP32 firmware calls `http://<laptop-LAN-IPv4>:4174/api/reading`; Wokwi calls `http://host.wokwi.internal:4174/api/reading`; the phone calls `http://<laptop-LAN-IPv4>:4174`.
 
 This is the **demo architecture**, not the planned farm installation. The concept note's on-site processing and internet-independent monitoring are future capabilities; this laptop bridge path does not test them. The shared 32°C inspection/fan threshold is a demo choice because the concept note defines no numeric values. The app reports the relay command but has no feedback that verifies fan rotation. Wokwi's LED remains a simulated indicator.
@@ -53,7 +53,8 @@ poultri/
 │  ├─ plugins/with-local-bridge-http.js
 │  ├─ src/app/index.tsx                # House 1 overview
 │  ├─ src/app/house-1.tsx              # readings, prompt, and bridge entry
-│  ├─ src/app/bridge-setup.tsx         # local bridge URL, connection, and reset
+│  ├─ src/app/settings.tsx             # local bridge URL, connection, and confirmed reset
+│  ├─ src/app/bridge-setup.tsx         # redirect to Settings for older links
 │  └─ src/demo-session.tsx             # shared local sensor bridge session state
 └─ wokwi/
    ├─ platformio.ini
@@ -299,6 +300,8 @@ function json(response, status, value) {
   response.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    // Web preview runs on another origin; the bridge is local-only, so any origin may read it.
+    'access-control-allow-origin': '*',
   });
   response.end(JSON.stringify(value));
 }
@@ -336,6 +339,16 @@ function readJson(request) {
 
 async function route(request, response) {
   const url = new URL(request.url ?? '/', 'http://localhost');
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+    });
+    response.end();
+    return;
+  }
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     json(response, 200, { ok: true });
@@ -412,6 +425,9 @@ Allow Node through Windows Firewall on **Private networks only** if prompted. Ch
 | Request | Result |
 |---|---|
 | `GET /api/health` | `200 { "ok": true }` |
+| `GET /api/history?hours=N` (1 to 24, default 24) | `200 { "points": [{ "t": <epoch ms>, "temperatureC": 24.0, "source": "live" }] }`; one live point per 10 seconds, kept in memory; `source` is `live` (Wokwi) or `replay` (seed script); `400` for an invalid `hours` |
+| `POST /api/history/replay` | JSON `{ "points": [{ "t": <epoch ms>, "temperatureC": 24.0 }] }`, 1 to 1440 points within the last 24 hours; replaces any earlier replay and stores the points as `replay`; `201 { "ok": true, "added": N }`; one invalid point rejects the whole batch with `400` |
+| `DELETE /api/history/replay` | Removes replayed points only; `200 { "ok": true, "removed": N }` |
 | `GET /api/reading` before data | `200 { "reading": null }` |
 | `POST /api/reading` | JSON `{ "source": "Local ESP32 + DHT22", "temperatureC": 24.0, "humidityPct": 60.0, "setpointC": 25.0, "alertActive": false, "fanSpeedPct": 0 }`; success is `201 { "ok": true }`. Legacy Wokwi posts may omit `source` and are labeled `Wokwi simulated data`. |
 | `GET /api/reading` after data | `200 { "reading": { "source": "Local ESP32 + DHT22", "temperatureC": 24.0, "humidityPct": 60.0, "setpointC": 25.0, "alertActive": false, "fanSpeedPct": 0, "receivedAt": "<ISO-8601>" } }` |
@@ -434,7 +450,7 @@ The app uses Expo SDK 57, Expo Router, React Native primitives, and the installe
 
 - `mobile/src/app/index.tsx` renders the House 1 overview and links to its detail route.
 - `mobile/src/app/house-1.tsx` renders environmental readings, a fan drawing that follows the physical relay command or simulated Wokwi percentage, an app-only vent visual, the inspection prompt, and a compact link to bridge setup.
-- `mobile/src/app/bridge-setup.tsx` renders local bridge connection controls and session reset.
+- `mobile/src/app/settings.tsx` renders local bridge connection controls and the confirmed session reset (shared `ConnectionSection`); `bridge-setup.tsx` redirects there.
 - `mobile/src/demo-session.tsx` owns bridge polling and in-memory reading, reference, prompt, acknowledgement, recovery, and reset state. The provider wraps the router in `mobile/src/app/_layout.tsx`, so route changes preserve the active demo session.
 - `mobile/src/ui.tsx` contains the shared system light/dark Poultri palette and branded header. The supplied logo and wordmark remain unchanged.
 
@@ -498,7 +514,7 @@ npm.cmd install
 npx.cmd expo start
 ```
 
-Scan the QR code with Expo Go for UI iteration. Open the House 1 card, tap **Bridge setup**, enter the laptop's Wi-Fi IPv4 bridge URL, and tap **Connect to bridge**. The first fresh sensor reading becomes the app's reference. The inspection prompt, physical relay, and Wokwi fan indicator all use the same 32°C demo threshold. Open **Bridge setup** and tap **Reset session** to finish. For acceptance on Android, create a fresh preview APK after changing `app.json`:
+Scan the QR code with Expo Go for UI iteration. Tap the settings button on Home, enter the laptop's Wi-Fi IPv4 bridge URL, and tap **Connect to bridge**. The first fresh sensor reading becomes the app's reference. The inspection prompt, physical relay, and Wokwi fan indicator all use the same 32°C demo threshold. Open **Bridge setup** and tap **Reset session** to finish. For acceptance on Android, create a fresh preview APK after changing `app.json`:
 
 ```powershell
 npx.cmd eas-cli@latest build --platform android --profile preview
