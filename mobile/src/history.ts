@@ -1,11 +1,15 @@
-export type HistoryPoint = { t: number; temperatureC: number };
-export type HistorySummary = { count: number; min: number; avg: number; max: number; latest: number; atOrAboveSetpoint: number };
+// source 'replay' marks points from the labeled seed script (bridge/seed.mjs); 'live' points come from Wokwi.
+export type HistoryPoint = { t: number; temperatureC: number; source: 'live' | 'replay' };
+export type HistorySummary = { count: number; min: number; avg: number; max: number; latest: number; atOrAboveSetpoint: number; replayed: number };
 
 export function parseHistory(value: unknown): HistoryPoint[] {
   const points = (value as { points?: unknown } | null)?.points;
   if (!Array.isArray(points)) throw new Error('Bridge returned invalid history.');
-  return points.filter((point: Partial<HistoryPoint> | null): point is HistoryPoint =>
-    typeof point?.t === 'number' && Number.isFinite(point.t) && typeof point?.temperatureC === 'number' && Number.isFinite(point.temperatureC));
+  return points
+    .filter((point: Partial<HistoryPoint> | null): point is HistoryPoint =>
+      typeof point?.t === 'number' && Number.isFinite(point.t) && typeof point?.temperatureC === 'number' && Number.isFinite(point.temperatureC))
+    // Anything not explicitly live is treated as replayed, so unlabeled data is never shown as real.
+    .map((point) => ({ t: point.t, temperatureC: point.temperatureC, source: point.source === 'live' ? 'live' : 'replay' }));
 }
 
 export function summarize(points: HistoryPoint[], setpointC: number): HistorySummary | null {
@@ -18,6 +22,7 @@ export function summarize(points: HistoryPoint[], setpointC: number): HistorySum
     max: Math.max(...temps),
     latest: temps[temps.length - 1],
     atOrAboveSetpoint: temps.filter((value) => value >= setpointC).length,
+    replayed: points.filter((point) => point.source === 'replay').length,
   };
 }
 

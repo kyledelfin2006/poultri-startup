@@ -25,7 +25,7 @@ export function answer(question: string, ctx: BuddyContext): string {
     const { summary, hours } = ctx;
     if (!summary) return `No history yet. The bridge records one point every 10 seconds once the simulation runs, and the last ${hours} hours will fill in from there.`;
     const setpoint = ctx.reading?.setpointC ?? 25;
-    return `In the last ${hours} hours the bridge recorded ${summary.count} points. Low ${summary.min.toFixed(1)}°C, average ${summary.avg.toFixed(1)}°C, high ${summary.max.toFixed(1)}°C. ${summary.atOrAboveSetpoint} of ${summary.count} points were at or above the ${setpoint.toFixed(1)}°C demo setpoint. This is simulated data.`;
+    return `In the last ${hours} hours the bridge recorded ${summary.count} points. Low ${summary.min.toFixed(1)}°C, average ${summary.avg.toFixed(1)}°C, high ${summary.max.toFixed(1)}°C. ${summary.atOrAboveSetpoint} of ${summary.count} points were at or above the ${setpoint.toFixed(1)}°C demo setpoint. ${summary.replayed ? `${summary.replayed} of these points are replayed sample data, not from this Wokwi run. ` : ''}This is simulated data.`;
   }
 
   if (/(explain|reading|current|now|temperature|humidity|fan|alert|prompt)/.test(q)) {

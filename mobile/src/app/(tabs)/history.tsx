@@ -61,6 +61,12 @@ export default function HistoryScreen() {
 
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Last {hours} hours</Text>
+          {!!summary?.replayed && (
+            <View style={styles.replay} accessible accessibilityLabel={`Includes replayed sample data. ${summary.replayed} of ${summary.count} points come from the replay script, not this Wokwi run. All data is simulated.`}>
+              <Text style={styles.replayTitle}>Includes replayed sample data</Text>
+              <Text style={styles.replayText}>{summary.replayed} of {summary.count} points come from the replay script, not this Wokwi run. All data is simulated.</Text>
+            </View>
+          )}
           {!activeUrl ? (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>Connect to the bridge to load recorded history.</Text>
@@ -117,6 +123,9 @@ function createStyles(colors: Palette) {
     segmentTextSelected: { color: colors.onLime },
     card: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: space.lg, gap: space.sm },
     cardLabel: { ...type.label, color: colors.ink },
+    replay: { backgroundColor: colors.warningSurface, borderRadius: radius.control, padding: space.md, gap: space.xs },
+    replayTitle: { ...type.label, color: colors.warningInk },
+    replayText: { ...type.caption, color: colors.warningInk },
     latest: { ...type.title, fontSize: 44, lineHeight: 50, color: colors.ink, fontVariant: ['tabular-nums'] },
     latestUnit: { fontSize: 22, color: colors.greenText },
     chart: { marginTop: space.md },

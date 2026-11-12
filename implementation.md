@@ -63,6 +63,10 @@ The Android bundle export used Expo's `--no-bytecode` option because the sandbox
 
 Added: Home, History, and Buddy tabs plus a Settings screen; bridge `/api/history` with an in-memory 24-hour record (`bridge/history.mjs`); a bar-chart History screen with 6h/12h/24h and min/average/max; an airflow label derived from fan percentage; and a scripted Buddy (`mobile/src/buddy.ts`, no AI model). Checked: `tsc`, `expo lint`, `npm test` in `bridge/` and `mobile/`, an Android bundle export, and the history endpoint against a local bridge. Not checked: any screen on an emulator or phone, and a run against the live Wokwi simulation.
 
+## Replay demo data (branch `ui-visual-accessibility`)
+
+Added: `bridge/seed.mjs` (`npm run seed`) posts a fixed 24-hour simulated sequence (288 points, one per 5 minutes) to `POST /api/history/replay`; `--clear` calls `DELETE /api/history/replay`. The bridge tags every history point `live` or `replay`. History shows "Includes replayed sample data" with the replayed count whenever replayed points are in range, and Buddy's summary says how many points are replayed. Unlabeled points from an older bridge are treated as replayed. Checked 2026-11-12: `npm test` in `bridge/` (6 tests) and `mobile/` (6 tests), `tsc`, `expo lint`, and the replay, label, Buddy summary, and clear in the web preview. Not checked on a phone or emulator.
+
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.

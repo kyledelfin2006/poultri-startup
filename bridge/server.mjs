@@ -4,6 +4,7 @@ import { createHistory } from './history.mjs';
 
 const PORT = Number(process.env.PORT ?? 4174);
 const MAX_BODY_BYTES = 1024;
+const MAX_REPLAY_BODY_BYTES = 128 * 1024; // up to 1440 replay points
 let latestReading = null;
 const history = createHistory();
 
@@ -17,7 +18,7 @@ function json(response, status, value) {
   response.end(JSON.stringify(value));
 }
 
-function readJson(request) {
+function readJson(request, maxBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -25,7 +26,7 @@ function readJson(request) {
 
     request.on('data', (chunk) => {
       size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
+      if (size > maxBytes) {
         tooLarge = true;
         chunks.length = 0;
       } else if (!tooLarge) {
@@ -54,7 +55,7 @@ async function route(request, response) {
   if (request.method === 'OPTIONS') {
     response.writeHead(204, {
       'access-control-allow-origin': '*',
-      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
       'access-control-allow-headers': 'content-type',
     });
     response.end();
@@ -78,6 +79,22 @@ async function route(request, response) {
       return;
     }
     json(response, 200, { points: history.query(hours) });
+    return;
+  }
+
+  // Labeled demo data: bridge/seed.mjs posts a replayed simulated sequence here. The app marks it as replayed.
+  if (request.method === 'POST' && url.pathname === '/api/history/replay') {
+    const value = await readJson(request, MAX_REPLAY_BODY_BYTES);
+    const added = history.addReplay(value?.points);
+    console.log(`Replay: added ${added} simulated sample points (marked as replayed).`);
+    json(response, 201, { ok: true, added });
+    return;
+  }
+
+  if (request.method === 'DELETE' && url.pathname === '/api/history/replay') {
+    const removed = history.clearReplay();
+    console.log(`Replay: removed ${removed} replayed points.`);
+    json(response, 200, { ok: true, removed });
     return;
   }
 

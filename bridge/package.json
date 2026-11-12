@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
+    "seed": "node seed.mjs",
     "test": "node --test"
   }
 }

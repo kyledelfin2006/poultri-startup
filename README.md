@@ -153,6 +153,8 @@ npx.cmd expo start
 Scan the QR code with Expo Go and keep this terminal running. For connected readings on an Android phone, use the preview APK above; for connected readings on the emulator, use the local Android build.
 ### E. Start the bridge and connect the app (each demo)
 
+Optional: to show a full History chart before Wokwi has run for long, run `npm.cmd run seed` in `bridge/` after the bridge starts. It loads a fixed 24-hour **simulated** sequence that the app labels as replayed sample data. `npm.cmd run seed -- --clear` removes it; restarting the bridge also clears it.
+
 1. Open a new PowerShell window at the repository folder, then start the bridge:
 
    ~~~powershell

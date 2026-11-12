@@ -31,3 +31,19 @@ test('summarizes history and buckets points', () => {
   assert.deepEqual(bucketize(points, 0, 100, 2), [24, 27]);
   assert.match(answer('summarize history', { ...ctx, summary }), /Low 24\.0°C, average 26\.0°C, high 28\.0°C/);
 });
+
+test('history parsing keeps sources and treats unlabeled points as replayed', async () => {
+  const { parseHistory } = await import('./history.ts');
+  const parsed = parseHistory({ points: [{ t: 1, temperatureC: 24, source: 'live' }, { t: 2, temperatureC: 25, source: 'replay' }, { t: 3, temperatureC: 26 }] });
+  assert.deepEqual(parsed.map((p) => p.source), ['live', 'replay', 'replay']);
+  assert.equal(summarize(parsed, 25).replayed, 2);
+});
+
+test('summary says when points are replayed sample data', () => {
+  const points = [{ t: 1, temperatureC: 24, source: 'replay' }, { t: 2, temperatureC: 26, source: 'live' }];
+  const text = answer('Summarize the last 24 hours', { ...ctx, summary: summarize(points, 25) });
+  assert.match(text, /1 of these points are replayed sample data/);
+  assert.match(text, /simulated data/);
+  const live = answer('Summarize the last 24 hours', { ...ctx, summary: summarize([points[1]], 25) });
+  assert.doesNotMatch(live, /replayed/);
+});
