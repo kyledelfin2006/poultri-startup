@@ -31,9 +31,12 @@ type DemoSessionValue = {
   connect: () => Promise<void>;
   acknowledge: () => void;
   resetDemo: () => void;
+  samples: number[];
+  activeUrl: string;
 };
 
 const STALE_AFTER_MS = 5000;
+const MAX_SAMPLES = 120;
 
 async function getJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
@@ -78,6 +81,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const alertRef = useRef<AlertRecord | null>(null);
   const previousStatusRef = useRef('Not connected');
   const previousAlertRef = useRef<AlertRecord | null>(null);
+  const [samples, setSamples] = useState<number[]>([]);
+  const samplesRef = useRef<number[]>([]);
+  const lastSampleAtRef = useRef('');
 
   const sampleAgeMs = reading ? Math.max(0, now - Date.parse(reading.receivedAt)) : 0;
   const stale = reading !== null && sampleAgeMs > STALE_AFTER_MS;
@@ -147,6 +153,11 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
 
         const sample = payload.reading;
         setReading(sample);
+        if (lastSampleAtRef.current !== sample.receivedAt) {
+          lastSampleAtRef.current = sample.receivedAt;
+          samplesRef.current = [...samplesRef.current, sample.temperatureC].slice(-MAX_SAMPLES);
+          setSamples(samplesRef.current);
+        }
         const fresh = Date.now() - Date.parse(sample.receivedAt) <= STALE_AFTER_MS;
         if (!fresh) return;
 
@@ -204,6 +215,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       setBaseline(null);
       setAlertRecord(null);
       setReading(null);
+      samplesRef.current = [];
+      lastSampleAtRef.current = '';
+      setSamples([]);
       setActiveUrl(normalized);
       setConnected(true);
       setMessage('Connected. Waiting for a fresh Wokwi reading.');
@@ -228,6 +242,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     alertRef.current = null;
     setBaseline(null);
     setAlertRecord(null);
+    samplesRef.current = [];
+    setSamples([]);
     setMessage('Demo reset. The next fresh reading becomes the reference.');
   }
 
@@ -249,6 +265,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         connect,
         acknowledge,
         resetDemo,
+        samples,
+        activeUrl: connected ? activeUrl : '',
       }}
     >
       {children}

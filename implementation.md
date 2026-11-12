@@ -58,6 +58,10 @@ On 2026-10-18, the explicit external gateway override was removed from `wokwi.to
 
 The Android bundle export used Expo's `--no-bytecode` option because the sandbox denied Hermes bytecode output to its temporary directory. This validates Metro bundling, not the final APK build.
 
+## Tabs, history, and Buddy (branch `ui-visual-accessibility`)
+
+Added: Home, History, and Buddy tabs plus a Settings screen; bridge `/api/history` with an in-memory 24-hour record (`bridge/history.mjs`); a bar-chart History screen with 6h/12h/24h and min/average/max; an airflow label derived from fan percentage; and a scripted Buddy (`mobile/src/buddy.ts`, no AI model). Checked: `tsc`, `expo lint`, `npm test` in `bridge/` and `mobile/`, an Android bundle export, and the history endpoint against a local bridge. Not checked: any screen on an emulator or phone, and a run against the live Wokwi simulation.
+
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.

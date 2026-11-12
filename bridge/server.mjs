@@ -1,9 +1,11 @@
 import { createServer } from 'node:http';
 import { networkInterfaces } from 'node:os';
+import { createHistory } from './history.mjs';
 
-const PORT = 4174;
+const PORT = Number(process.env.PORT ?? 4174);
 const MAX_BODY_BYTES = 1024;
 let latestReading = null;
+const history = createHistory();
 
 function json(response, status, value) {
   response.writeHead(status, {
@@ -57,6 +59,16 @@ async function route(request, response) {
     return;
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/history') {
+    const hours = Number(url.searchParams.get('hours') ?? 24);
+    if (!Number.isFinite(hours) || hours < 1 || hours > 24) {
+      json(response, 400, { error: 'hours must be between 1 and 24' });
+      return;
+    }
+    json(response, 200, { points: history.query(hours) });
+    return;
+  }
+
   if (request.method === 'POST' && url.pathname === '/api/reading') {
     const value = await readJson(request);
     const validTemperature = Number.isFinite(value?.temperatureC) && value.temperatureC >= -40 && value.temperatureC <= 80;
@@ -69,6 +81,7 @@ async function route(request, response) {
       return;
     }
 
+    history.add(value.temperatureC);
     latestReading = {
       temperatureC: value.temperatureC,
       humidityPct: value.humidityPct,

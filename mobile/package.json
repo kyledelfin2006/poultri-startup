@@ -26,6 +26,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "node --test src/buddy.test.mjs",
     "build:apk": "npx eas-cli@latest build --platform android --profile preview"
   },
   "private": true

@@ -391,6 +391,7 @@ Allow Node through Windows Firewall on **Private networks only** if prompted. Ch
 | Request | Result |
 |---|---|
 | `GET /api/health` | `200 { "ok": true }` |
+| `GET /api/history?hours=N` (1 to 24, default 24) | `200 { "points": [{ "t": <epoch ms>, "temperatureC": 24.0 }] }`; one point per 10 seconds, kept in memory; `400` for an invalid `hours` |
 | `GET /api/reading` before data | `200 { "reading": null }` |
 | `POST /api/reading` | JSON `{ "temperatureC": 24.0, "humidityPct": 60.0, "setpointC": 25.0, "alertActive": false, "fanSpeedPct": 0 }`; success is `201 { "ok": true }` |
 | `GET /api/reading` after data | `200 { "reading": { "temperatureC": 24.0, "humidityPct": 60.0, "setpointC": 25.0, "alertActive": false, "fanSpeedPct": 0, "receivedAt": "<ISO-8601>" } }` |
