@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BridgeConnectionFields } from '../bridge-connection';
 import { useDemoSession } from '../demo-session';
-import { ActionButton, BrandHeader, MetricIcon, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
+import { ActionButton, BrandHeader, Icon, MetricIcon, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
 
 export default function HouseDetailScreen() {
   const router = useRouter();
@@ -85,7 +85,7 @@ export default function HouseDetailScreen() {
           onPress={() => router.canGoBack() ? router.back() : router.replace('/')}
           style={styles.backButton}
         >
-          <View style={styles.backCircle}><Text style={styles.backArrow}>‹</Text></View>
+          <View style={styles.backCircle}><Icon name="chevron-left" color={palette.greenText} /></View>
           <Text style={styles.backText}>House overview</Text>
         </Pressable>
 
@@ -218,7 +218,6 @@ function createStyles(colors: Palette) {
     content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
     backButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start', minHeight: 44, marginTop: spacing.sm },
     backCircle: { width: 32, height: 32, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-    backArrow: { ...text.heading, fontWeight: '400', color: colors.greenText, marginTop: -spacing.xs },
     backText: { ...text.label, color: colors.greenText },
     heading: { marginTop: spacing.lg, marginBottom: spacing.xl },
     headingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },

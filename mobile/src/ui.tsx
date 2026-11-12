@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, StyleSheet, Text, View, useColorScheme, type TextStyle } from 'react-native';
 
 // Type scale. System font only: no rounded/geometric sans ships with expo-font here,
@@ -155,8 +156,6 @@ export function ActionButton({
       opacity: disabled ? 0.5 : 1,
     },
     text: { color: ink, fontSize: 15, fontWeight: '700' as const },
-    // Chevron drawn with two borders; an icon package needs approval (AGENTS.md).
-    chevron: { width: 8, height: 8, borderTopWidth: 2, borderRightWidth: 2, borderColor: ink, transform: [{ rotate: '45deg' }] },
   });
 
   return (
@@ -172,9 +171,25 @@ export function ActionButton({
       ]}
     >
       <Text style={componentStyles.text}>{title}</Text>
-      {chevron && <View style={componentStyles.chevron} accessible={false} />}
+      {chevron && <Icon name="chevron-right" color={ink} size={14} />}
     </Pressable>
   );
+}
+
+// The app's single icon set (Ionicons). Callers use these names, not Ionicons names directly.
+const ICONS = {
+  check: 'checkmark',
+  alert: 'alert',
+  'chevron-left': 'chevron-back',
+  'chevron-right': 'chevron-forward',
+  settings: 'options-outline',
+} as const satisfies Record<string, keyof typeof Ionicons.glyphMap>;
+
+export type IconName = keyof typeof ICONS;
+
+// Decorative: the control or row that contains an icon carries the accessibilityLabel.
+export function Icon({ name, color, size = 16 }: { name: IconName; color: string; size?: number }) {
+  return <Ionicons name={ICONS[name]} size={size} color={color} accessible={false} importantForAccessibility="no-hide-descendants" />;
 }
 
 export function SectionTitle({ children, palette }: { children: string; palette: Palette }) {

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BridgeConnectionFields } from '../bridge-connection';
-import { BrandHeader, Palette, radius, spacing, text, usePalette } from '../ui';
+import { BrandHeader, Icon, Palette, radius, spacing, text, usePalette } from '../ui';
 
 // Placeholder settings screen: only the bridge connection for now.
 export default function SettingsScreen() {
@@ -21,7 +21,7 @@ export default function SettingsScreen() {
           onPress={() => router.canGoBack() ? router.back() : router.replace('/')}
           style={styles.backButton}
         >
-          <View style={styles.backCircle}><Text style={styles.backArrow}>‹</Text></View>
+          <View style={styles.backCircle}><Icon name="chevron-left" color={palette.greenText} /></View>
           <Text style={styles.backText}>House overview</Text>
         </Pressable>
 
@@ -43,7 +43,6 @@ function createStyles(colors: Palette) {
     content: { flexGrow: 1, width: '100%', maxWidth: 720, alignSelf: 'center', paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
     backButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start', minHeight: 44, marginTop: spacing.sm },
     backCircle: { width: 32, height: 32, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-    backArrow: { ...text.heading, fontWeight: '400', color: colors.greenText, marginTop: -spacing.xs },
     backText: { ...text.label, color: colors.greenText },
     title: { ...text.title, color: colors.ink, marginTop: spacing.lg, marginBottom: spacing.xl },
     section: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.xl, gap: spacing.md },

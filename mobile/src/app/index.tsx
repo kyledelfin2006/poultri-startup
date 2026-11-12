@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDemoSession } from '../demo-session';
 import { TrendLine } from '../trend-line';
-import { ActionButton, BrandHeader, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
+import { ActionButton, BrandHeader, Icon, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -43,14 +43,7 @@ export default function HomeScreen() {
             accessibilityHint="Opens the bridge connection settings."
             style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
           >
-            {/* Sliders icon drawn with views; an icon package needs approval (agents.md). */}
-            <View style={styles.slidersIcon} accessible={false}>
-              {[5, 13, 8].map((knobLeft) => (
-                <View key={knobLeft} style={styles.sliderTrack}>
-                  <View style={[styles.sliderKnob, { left: knobLeft }]} />
-                </View>
-              ))}
-            </View>
+            <Icon name="settings" color={palette.ink} size={22} />
           </Pressable>
         </View>
         <View style={styles.heading}>
@@ -121,7 +114,7 @@ export default function HomeScreen() {
           <Text style={styles.houseLabel}>INSPECTION</Text>
           <View style={styles.inspectionRow}>
             <View style={[styles.inspectionIcon, warm && styles.inspectionIconAlert]}>
-              <Text style={[styles.inspectionGlyph, warm && styles.inspectionGlyphAlert]}>{inspection === 'inspect' ? '!' : '✓'}</Text>
+              <Icon name={inspection === 'inspect' ? 'alert' : 'check'} color={warm ? palette.alertSurface : palette.greenText} />
             </View>
             <Text style={[styles.inspectionText, inspection === 'inspect' && styles.inspectionTextAlert]}>{reviewLabel}</Text>
           </View>
@@ -139,9 +132,6 @@ function createStyles(colors: Palette) {
     topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
     settingsButton: { width: 44, height: 44, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
     settingsButtonPressed: { backgroundColor: colors.greenSurface },
-    slidersIcon: { width: 20, height: 18, justifyContent: 'space-between' },
-    sliderTrack: { height: 2, borderRadius: radius.pill, backgroundColor: colors.ink, justifyContent: 'center' },
-    sliderKnob: { position: 'absolute', width: 6, height: 6, marginTop: -2, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface },
     heading: { marginTop: spacing.xl, marginBottom: spacing.xl, gap: spacing.xs },
     title: { ...text.title, color: colors.ink },
     sourceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -178,8 +168,6 @@ function createStyles(colors: Palette) {
     inspectionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     inspectionIcon: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSurface },
     inspectionIconAlert: { backgroundColor: colors.warningInk },
-    inspectionGlyph: { ...text.body, fontWeight: '700', color: colors.greenText },
-    inspectionGlyphAlert: { color: colors.alertSurface },
     inspectionText: { ...text.body, fontWeight: '700', color: colors.ink, flexShrink: 1 },
     inspectionTextAlert: { color: colors.warningInk },
     inspectionHelp: { ...text.caption, color: colors.muted },
