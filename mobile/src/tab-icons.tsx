@@ -18,7 +18,7 @@ export function TabIcon({ kind, focused }: { kind: Kind; focused: boolean }) {
       accessible={false}
       style={{ width: 48, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? palette.forest : 'transparent' }}
     >
-      <Ionicons name={NAMES[kind][focused ? 0 : 1]} size={20} color={focused ? palette.lime : palette.muted} accessible={false} />
+      <Ionicons name={NAMES[kind][focused ? 0 : 1]} size={20} color={focused ? palette.onForest : palette.muted} accessible={false} />
     </View>
   );
 }

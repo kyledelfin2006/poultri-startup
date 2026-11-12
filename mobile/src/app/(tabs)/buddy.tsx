@@ -109,9 +109,10 @@ function createStyles(colors: Palette) {
     messages: { paddingHorizontal: space.xl, paddingVertical: space.md, gap: space.md },
     bubble: { maxWidth: '86%', borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
     buddyBubble: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-    userBubble: { alignSelf: 'flex-end', backgroundColor: colors.lime },
+    // Lime stays on the send action only; user bubbles use the quiet green surface.
+    userBubble: { alignSelf: 'flex-end', backgroundColor: colors.greenSurface, borderWidth: 1, borderColor: colors.border },
     bubbleText: { ...type.body, color: colors.ink },
-    userText: { color: colors.onLime },
+    userText: { color: colors.ink },
     footer: { paddingHorizontal: space.xl, paddingTop: space.sm, paddingBottom: space.md, gap: space.md },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
     chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill, backgroundColor: colors.greenSurface },

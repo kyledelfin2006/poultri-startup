@@ -4,7 +4,8 @@ import { useDemoSession } from './demo-session';
 import { ActionButton, Palette, radius, space, type, usePalette } from './ui';
 
 // Bridge URL, connect, and reset controls. Shared by House 1 and Settings.
-export function ConnectionSection() {
+// Lime is reserved for one action per screen; pass connectSecondary where the screen already has one (House 1).
+export function ConnectionSection({ connectSecondary = false }: { connectSecondary?: boolean } = {}) {
   const palette = usePalette();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { bridgeUrl, setBridgeUrl, connected, connecting, message, reading, stale, status, connect, resetDemo } = useDemoSession();
@@ -27,7 +28,7 @@ export function ConnectionSection() {
         style={styles.input}
         value={bridgeUrl}
       />
-      <ActionButton title={connecting ? 'Connecting…' : connected ? 'Reconnect' : 'Connect to bridge'} onPress={() => void connect()} palette={palette} disabled={connecting} />
+      <ActionButton title={connecting ? 'Connecting…' : connected ? 'Reconnect' : 'Connect to bridge'} onPress={() => void connect()} palette={palette} disabled={connecting} secondary={connectSecondary} />
       {connecting && <ActivityIndicator color={palette.greenText} />}
       {!!message && !connecting && (
         <View style={styles.messageRow}>

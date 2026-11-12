@@ -206,7 +206,7 @@ export default function HouseDetailScreen() {
           {!!visualDataState && <Text style={styles.airflowDataState}>{visualDataState}</Text>}
         </View>
 
-        <View style={styles.connectionWrap}><ConnectionSection /></View>
+        <View style={styles.connectionWrap}><ConnectionSection connectSecondary /></View>
       </ScrollView>
     </SafeAreaView>
   );

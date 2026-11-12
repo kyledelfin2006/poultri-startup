@@ -95,6 +95,10 @@ Approved packages: `react-native-svg` (History line and area chart; gaps in data
 
 **Reset session** now asks first: a danger-token panel says "Reset clears the inspection prompt and session reference." with **Reset** and **Cancel**. Buddy states only values the app holds: the reading reply reports the prompt state the app tracks (not one inferred from temperature), the summary says the bridge "holds" its points, and why/what-to-do questions get a reply that gives no cause, diagnosis, or flock action. Checked 2026-11-12: `npm test` in `mobile/` (12 tests), `tsc`, `expo lint`, and the reset flow in the web preview.
 
+## Visual quality bar (branch `iot`)
+
+Audited 2026-11-12: no gradients, blur, glow shadows, or decorative art (the logo is the only illustration); Buddy says "Scripted demo helper · no AI model"; numbers lead and labels stay small; every chart shows recorded data or says it has none. Lime is limited to one action per screen: View House 1 (Home), the selected range (History), Acknowledge during a prompt (House 1), Connect (Settings), and Send (Buddy). The House 1 connect button and History's "Open settings" are outlined, Buddy's user bubbles use the green surface, and the selected tab icon uses `onForest` (11.6:1 on the tab pill).
+
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.

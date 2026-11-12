@@ -70,7 +70,7 @@ export default function HistoryScreen() {
           {!activeUrl ? (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>Connect to the bridge to see history.</Text>
-              <ActionButton title="Open settings" onPress={() => router.push('/settings')} palette={palette} />
+              <ActionButton title="Open settings" onPress={() => router.push('/settings')} palette={palette} secondary />
             </View>
           ) : points.length === 0 ? (
             <Text style={styles.emptyText}>
