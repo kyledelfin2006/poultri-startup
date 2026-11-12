@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDemoSession } from '../../demo-session';
 import { SettingsIcon } from '../../tab-icons';
@@ -18,6 +18,8 @@ export default function HomeScreen() {
   const sourceLabel = reading?.source ?? 'Waiting for sensor data';
   const physicalFan = reading?.source === 'Local ESP32 + DHT22';
   const statusWarning = stale || status.startsWith('Disconnected');
+  // Three-block fan meter: 0%, 50%, 100% fill 0, 2, 3 blocks; an ESP32 relay fills all or none.
+  const fanBlocks = !reading ? 0 : physicalFan ? (reading.fanSpeedPct ? 3 : 0) : Math.round((reading.fanSpeedPct / 100) * 3);
   const setpoint = reading?.setpointC ?? 25;
   const reviewLabel = alertRecord
     ? alertRecord.recovered ? 'Recovered' : alertRecord.acknowledged ? 'Acknowledged' : 'Inspect House 1'
@@ -48,21 +50,26 @@ export default function HomeScreen() {
           <View style={styles.cardTop}>
             <Text style={styles.houseTitle}>House 1</Text>
             <View style={[styles.statusPill, statusWarning && styles.statusPillWarning]}>
-              <View style={[styles.statusDot, statusWarning ? styles.warningDot : reading ? styles.liveDot : styles.waitingDot]} />
+              {statusWarning || status === 'Connected'
+                ? <StatusMark kind={statusWarning ? 'alert' : 'check'} color={statusWarning ? palette.warningInk : palette.onHeroPill} />
+                : <View style={styles.statusDot} />}
               <Text style={[styles.statusText, statusWarning && styles.statusTextWarning]}>{status}</Text>
             </View>
           </View>
           <View style={styles.primaryMetric}>
-            <Text style={[styles.temperature, compact && styles.temperatureCompact]}>
-              {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
-            </Text>
+            <View style={styles.temperatureRow}>
+              <Text style={[styles.temperature, compact && styles.temperatureCompact]}>
+                {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
+              </Text>
+              {!compact && <Image source={require('../../../assets/house-line.png')} style={styles.houseArt} resizeMode="contain" accessible={false} />}
+            </View>
             <View style={styles.metricLabelRow}>
-              <MetricIcon kind="temperature" color={palette.muted} />
+              <MetricIcon kind="temperature" color={palette.heroMuted} />
               <Text style={styles.metricLabel}>{reading ? `Current temperature · updated ${Math.floor(sampleAgeMs / 1000)}s ago` : 'Current temperature'}</Text>
             </View>
           </View>
           <View style={styles.trend}>
-            <Sparkline values={samples} setpoint={setpoint} barColor={palette.chart} lastColor={palette.ink} lineColor={palette.greenText} />
+            <Sparkline values={samples} setpoint={setpoint} barColor={palette.heroAccent} lastColor={palette.heroAccent} lineColor={palette.onHero} />
             <Text style={styles.trendCaption}>
               {samples.length < 2 ? 'Collecting samples' : `Since connecting · dashed line: ${setpoint.toFixed(1)}°C demo setpoint`}
             </Text>
@@ -70,7 +77,7 @@ export default function HomeScreen() {
           <View style={styles.secondaryMetrics}>
             <View style={styles.secondaryMetric}>
               <View style={styles.metricLabelRow}>
-                <MetricIcon kind="humidity" color={palette.muted} />
+                <MetricIcon kind="humidity" color={palette.heroMuted} />
                 <Text style={styles.metricLabel}>Humidity</Text>
               </View>
               <Text style={styles.metricValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
@@ -78,7 +85,12 @@ export default function HomeScreen() {
             <View style={styles.verticalDivider} />
             <View style={styles.secondaryMetric}>
               <Text style={styles.metricLabel}>{physicalFan ? 'Fan relay' : 'Simulated fan'}</Text>
-              <Text style={styles.metricValue}>{!reading ? '—' : physicalFan ? (reading.fanSpeedPct ? 'ON' : 'OFF') : `${reading.fanSpeedPct}%`}</Text>
+              <View style={styles.fanValueRow}>
+                <Text style={styles.metricValue}>{!reading ? '—' : physicalFan ? (reading.fanSpeedPct ? 'ON' : 'OFF') : `${reading.fanSpeedPct}%`}</Text>
+                <View style={styles.meter} accessible={false}>
+                  {[0, 1, 2].map((block) => <View key={block} style={[styles.meterBlock, block < fanBlocks && styles.meterBlockOn]} />)}
+                </View>
+              </View>
               {reading && !physicalFan && <Text style={styles.metricLabel}>{airflowLabel(reading.fanSpeedPct)} airflow · simulated</Text>}
             </View>
           </View>
@@ -116,30 +128,34 @@ function createStyles(colors: Palette) {
     sourceRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
     sourceDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.greenText },
     sourceText: { ...type.caption, color: colors.greenText, fontWeight: '700' },
-    houseCard: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: space.lg },
+    // Solid deep green hero card (spec); the border separates it from the dark-mode page.
+    houseCard: { backgroundColor: colors.hero, borderRadius: radius.card, borderWidth: 1, borderColor: colors.heroLine, padding: space.lg },
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
-    houseTitle: { ...type.heading, color: colors.ink },
-    statusPill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.greenSurface, flexShrink: 1 },
+    houseTitle: { ...type.heading, color: colors.onHero },
+    statusPill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.heroPill, flexShrink: 1 },
     statusPillWarning: { backgroundColor: colors.warningSurface },
-    statusDot: { width: 8, height: 8, borderRadius: 4 },
-    liveDot: { backgroundColor: colors.greenText },
-    waitingDot: { backgroundColor: colors.muted },
-    warningDot: { backgroundColor: colors.warningInk },
-    statusText: { ...type.caption, color: colors.greenText, fontWeight: '700', flexShrink: 1 },
+    statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.onHeroPill },
+    statusText: { ...type.caption, color: colors.onHeroPill, fontWeight: '700', flexShrink: 1 },
     statusTextWarning: { color: colors.warningInk },
     primaryMetric: { marginTop: space.xl },
-    temperature: { ...type.display, color: colors.ink, fontVariant: ['tabular-nums'] },
+    temperatureRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.sm },
+    temperature: { ...type.display, color: colors.onHero, fontVariant: ['tabular-nums'], flexShrink: 1 },
+    houseArt: { width: 92, height: 64, marginBottom: space.md, tintColor: colors.heroAccent },
     temperatureCompact: { fontSize: 58, lineHeight: 68 },
-    temperatureUnit: { fontSize: 30, letterSpacing: -0.5, color: colors.greenText },
+    temperatureUnit: { fontSize: 30, letterSpacing: -0.5, color: colors.heroAccent },
     metricLabelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-    metricLabel: { ...type.caption, color: colors.muted, flexShrink: 1 },
+    metricLabel: { ...type.caption, color: colors.heroMuted, flexShrink: 1 },
     trend: { marginTop: space.lg, marginBottom: space.lg, gap: space.sm },
-    trendCaption: { ...type.caption, color: colors.muted },
-    secondaryMetrics: { flexDirection: 'row', paddingTop: space.lg, borderTopWidth: 1, borderTopColor: colors.border, gap: space.lg },
+    trendCaption: { ...type.caption, color: colors.heroMuted },
+    secondaryMetrics: { flexDirection: 'row', paddingTop: space.lg, borderTopWidth: 1, borderTopColor: colors.heroLine, gap: space.lg },
     secondaryMetric: { flex: 1, minWidth: 0, gap: space.sm },
-    verticalDivider: { width: 1, backgroundColor: colors.border },
-    metricValue: { ...type.heading, color: colors.ink, fontVariant: ['tabular-nums'] },
-    lastKnown: { ...type.caption, color: colors.warningInk, marginTop: space.md },
+    verticalDivider: { width: 1, backgroundColor: colors.heroLine },
+    metricValue: { ...type.heading, color: colors.onHero, fontVariant: ['tabular-nums'] },
+    fanValueRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+    meter: { flexDirection: 'row', gap: space.xs },
+    meterBlock: { width: 14, height: 8, borderRadius: 2, borderWidth: 1, borderColor: colors.heroMuted },
+    meterBlockOn: { backgroundColor: colors.heroAccent, borderColor: colors.heroAccent },
+    lastKnown: { ...type.caption, color: colors.heroMuted, marginTop: space.md },
     cta: { marginTop: space.lg },
     inspection: { marginTop: space.xxl, gap: space.md },
     sectionTitle: { ...type.heading, color: colors.ink },

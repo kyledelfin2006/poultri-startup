@@ -97,7 +97,9 @@ Approved packages: `react-native-svg` (History line and area chart; gaps in data
 
 ## Visual quality bar (branch `iot`)
 
-Audited 2026-11-12: no gradients, blur, glow shadows, or decorative art (the logo is the only illustration); Buddy says "Scripted demo helper · no AI model"; numbers lead and labels stay small; every chart shows recorded data or says it has none. Lime is limited to one action per screen: View House 1 (Home), the selected range (History), Acknowledge during a prompt (House 1), Connect (Settings), and Send (Buddy). The House 1 connect button and History's "Open settings" are outlined, Buddy's user bubbles use the green surface, and the selected tab icon uses `onForest` (11.6:1 on the tab pill).
+Audited 2026-11-12: no gradients, blur, glow shadows, or decorative art (the logo is the only illustration); Buddy says "Scripted demo helper · no AI model"; numbers lead and labels stay small; every chart shows recorded data or says it has none. Lime is limited to one action per screen: View House 1 (Home), the selected range (History), Acknowledge during a prompt (House 1), Connect (Settings), and Send (Buddy). The House 1 connect button and History's "Open settings" are outlined, Buddy's user bubbles use the green surface.
+
+Home follows the hero-card spec (2026-11-12): a solid deep green card (`hero` #17432B, both themes) with the temperature in white Nunito ExtraBold, the unit, house line drawing, and thin trend bars in lime #CFF54A, a dashed white setpoint line, a pale green "Connected" pill with a check mark, Humidity, and Simulated fan with a three-block meter and the airflow label (ESP32 relay ON/OFF fills all or no blocks). The header uses an outline gear, and the selected tab is a deep green circle holding a lime icon. The spec overrides the earlier one-lime-per-screen and no-decorative-drawing choices on Home: lime now also marks the unit, drawing, trend, and selected tab. Hero text pairs: white 11.2:1, lime 9.0:1, muted 7.8:1, pill text 9.0:1.
 
 ## Follow-up work
 

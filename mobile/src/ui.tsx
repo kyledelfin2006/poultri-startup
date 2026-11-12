@@ -21,6 +21,13 @@ export type Palette = {
   onForestMuted: string;
   onForestAccent: string;
   forest: string;
+  hero: string;
+  onHero: string;
+  heroAccent: string;
+  heroMuted: string;
+  heroLine: string;
+  heroPill: string;
+  onHeroPill: string;
   forestLine: string;
   warningSurface: string;
   warningInk: string;
@@ -49,6 +56,14 @@ const lightPalette: Palette = {
   onForestMuted: '#C9DCC4',
   onForestAccent: '#C6EC7A',
   forest: '#1B3A2A',
+  // Home hero card: solid deep green in both themes (spec). Text pairs: white 11.2:1, lime 9.0:1, muted 7.8:1, pill text 9.0:1.
+  hero: '#17432B',
+  onHero: '#FFFFFF',
+  heroAccent: '#CFF54A',
+  heroMuted: '#C9DCC4',
+  heroLine: '#4A7259',
+  heroPill: '#DDEBD0',
+  onHeroPill: '#17432B',
   forestLine: '#3E5E4A',
   warningSurface: '#F6DCC8',
   warningInk: '#6B3424',
@@ -76,6 +91,14 @@ const darkPalette: Palette = {
   onForestMuted: '#C9DCC4',
   onForestAccent: '#C6EC7A',
   forest: '#1B3A2A',
+  // Home hero card: solid deep green in both themes (spec). Text pairs: white 11.2:1, lime 9.0:1, muted 7.8:1, pill text 9.0:1.
+  hero: '#17432B',
+  onHero: '#FFFFFF',
+  heroAccent: '#CFF54A',
+  heroMuted: '#C9DCC4',
+  heroLine: '#4A7259',
+  heroPill: '#DDEBD0',
+  onHeroPill: '#17432B',
   forestLine: '#3E5E4A',
   warningSurface: '#4F3428',
   warningInk: '#FFD9C2',
@@ -147,9 +170,9 @@ export function Sparkline({ values, setpoint, barColor, lastColor, lineColor, he
   const hi = Math.max(...values, setpoint) + 0.5;
   const pos = (v: number) => ((v - lo) / (hi - lo)) * height;
   return (
-    <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ height, flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
+    <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ height, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2 }}>
       {values.map((v, i) => (
-        <View key={i} style={{ flex: 1, height: Math.max(3, pos(v)), borderRadius: 2, backgroundColor: i === values.length - 1 ? lastColor : barColor }} />
+        <View key={i} style={{ flex: 1, maxWidth: 4, height: Math.max(3, pos(v)), borderRadius: 2, backgroundColor: i === values.length - 1 ? lastColor : barColor }} />
       ))}
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: pos(setpoint), borderTopWidth: 1, borderStyle: 'dashed', borderColor: lineColor }} />
     </View>
