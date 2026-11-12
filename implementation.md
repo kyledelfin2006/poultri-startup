@@ -71,6 +71,10 @@ Added: `bridge/seed.mjs` (`npm run seed`) posts a fixed 24-hour simulated sequen
 
 Approved packages: `react-native-svg` (History line and area chart; gaps in data break the line instead of bridging it), `@expo/vector-icons` (Ionicons for the tab, settings, chevron, and status icons), and `@expo-google-fonts/nunito` (Nunito ExtraBold for the display, title, and heading styles, loaded in `app/_layout.tsx`; body text stays the system font). Copy uses one state vocabulary: No inspection needed, Inspect House 1, Acknowledged, Recovered; "demo setpoint" replaces "simulation setpoint"; "Wokwi simulated data" and "Reset session" are unchanged. Checked 2026-11-12: `npm test` in `mobile/` (7 tests), `tsc`, `expo lint`, and the web preview in light and dark. Not checked on a phone or emulator.
 
+## Reset confirmation and Buddy claims (branch `ui-visual-accessibility`)
+
+**Reset session** now asks first: a danger-token panel says "Reset clears the inspection prompt and session reference." with **Reset** and **Cancel**. Buddy states only values the app holds: the reading reply reports the prompt state the app tracks (not one inferred from temperature), the summary says the bridge "holds" its points, and why/what-to-do questions get a reply that gives no cause, diagnosis, or flock action. Checked 2026-11-12: `npm test` in `mobile/` (12 tests), `tsc`, `expo lint`, and the reset flow in the web preview.
+
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.

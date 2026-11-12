@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useDemoSession } from './demo-session';
 import { ActionButton, Palette, radius, space, type, usePalette } from './ui';
 
@@ -9,6 +9,7 @@ export function ConnectionSection() {
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { bridgeUrl, setBridgeUrl, connected, connecting, message, reading, stale, status, connect, resetDemo } = useDemoSession();
   const statusWarning = stale || status.startsWith('Disconnected');
+  const [confirmingReset, setConfirmingReset] = useState(false); // reset is destructive for the demo, so it takes two taps
 
   return (
     <View style={styles.section}>
@@ -36,7 +37,33 @@ export function ConnectionSection() {
           </Text>
         </View>
       )}
-      <View style={styles.reset}><ActionButton title="Reset session" onPress={resetDemo} palette={palette} secondary /></View>
+      <View style={styles.reset}>
+        {confirmingReset ? (
+          <View style={styles.confirm} accessibilityLiveRegion="polite">
+            <Text style={styles.confirmText}>Reset clears the inspection prompt and session reference.</Text>
+            <View style={styles.confirmRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Reset session now"
+                onPress={() => { resetDemo(); setConfirmingReset(false); }}
+                style={({ pressed }) => [styles.dangerButton, styles.dangerFilled, pressed && styles.dangerPressed]}
+              >
+                <Text style={styles.dangerFilledText}>Reset</Text>
+              </Pressable>
+              <View style={styles.cancel}><ActionButton title="Cancel" onPress={() => setConfirmingReset(false)} palette={palette} secondary /></View>
+            </View>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="Asks for confirmation before clearing the prompt."
+            onPress={() => setConfirmingReset(true)}
+            style={({ pressed }) => [styles.dangerButton, pressed && styles.dangerPressed]}
+          >
+            <Text style={styles.dangerText}>Reset session</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -53,5 +80,15 @@ function createStyles(colors: Palette) {
     message: { ...type.caption, color: colors.greenText, flex: 1 },
     messageWarning: { color: colors.warningInk },
     reset: { marginTop: space.sm },
+    confirm: { gap: space.md, padding: space.md, borderRadius: radius.control, borderWidth: 1.5, borderColor: colors.danger },
+    confirmText: { ...type.body, color: colors.danger },
+    confirmRow: { flexDirection: 'row', gap: space.md },
+    cancel: { flex: 1 },
+    dangerButton: { flex: 1, minHeight: 48, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg },
+    dangerFilled: { backgroundColor: colors.danger },
+    dangerPressed: { opacity: 0.8 },
+    dangerText: { ...type.label, color: colors.danger },
+    // surface on danger: 7.67:1 light, 7.79:1 dark (white fails on the dark-mode danger tone).
+    dangerFilledText: { ...type.label, color: colors.surface },
   });
 }

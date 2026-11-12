@@ -16,7 +16,8 @@ export default function BuddyScreen() {
   const palette = usePalette();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { q, h, n } = useLocalSearchParams<{ q?: string; h?: string; n?: string }>();
-  const { activeUrl, reading, stale } = useDemoSession();
+  const { activeUrl, reading, stale, alertRecord } = useDemoSession();
+  const inspection = !alertRecord ? 'clear' : alertRecord.recovered ? 'recovered' : alertRecord.acknowledged ? 'acknowledged' : 'inspect';
   const hours = Number(h) >= 1 && Number(h) <= 24 ? Number(h) : 24;
   const { points } = useHistory(activeUrl, hours);
   const summary = summarize(points, reading?.setpointC ?? 25);
@@ -28,13 +29,13 @@ export default function BuddyScreen() {
   const ask = useCallback((question: string) => {
     const text = question.trim();
     if (!text) return;
-    const reply = answer(text, { reading, stale, summary, hours });
+    const reply = answer(text, { reading, inspection, stale, summary, hours });
     setMessages((previous) => [
       ...previous,
       { id: previous.length, from: 'user', text },
       { id: previous.length + 1, from: 'buddy', text: reply },
     ]);
-  }, [reading, stale, summary, hours]);
+  }, [reading, inspection, stale, summary, hours]);
 
   useEffect(() => {
     if (!q || !n || handled.current === n) return;

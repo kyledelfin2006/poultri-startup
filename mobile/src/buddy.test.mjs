@@ -4,7 +4,7 @@ import { answer } from './buddy.ts';
 import { bucketize, summarize } from './history.ts';
 
 const reading = { temperatureC: 26.1, humidityPct: 58.4, setpointC: 25, fanSpeedPct: 50 };
-const ctx = { reading, stale: false, summary: null, hours: 24 };
+const ctx = { reading, inspection: 'inspect', stale: false, summary: null, hours: 24 };
 
 test('refuses health questions', () => {
   assert.match(answer('Is my flock sick?', ctx), /can't give poultry-health advice/);
@@ -13,7 +13,7 @@ test('refuses health questions', () => {
 test('explains the reading with setpoint and fan', () => {
   const text = answer('Explain this reading', ctx);
   assert.match(text, /26\.1°C/);
-  assert.match(text, /inspection prompt is active/);
+  assert.match(text, /Inspect House 1/);
   assert.match(text, /50%/);
 });
 
@@ -59,4 +59,40 @@ test('chart paths break at empty buckets and never bridge missing data', async (
   const empty = chartPaths([null, null], 400, 100, 23, 27);
   assert.equal(empty.line, '');
   assert.equal(empty.last, null);
+});
+
+test('reading reply states the prompt state the app holds, not one inferred from temperature', () => {
+  const expected = { clear: /No inspection prompt is open/, inspect: /Inspect House 1/, acknowledged: /Acknowledged/, recovered: /Recovered and stays until Reset session/ };
+  for (const [inspection, pattern] of Object.entries(expected)) {
+    assert.match(answer('Explain this reading', { ...ctx, inspection }), pattern, inspection);
+  }
+  // Below the setpoint but still holding a recovered prompt: must not claim there is no prompt.
+  const cool = { ...ctx, reading: { ...reading, temperatureC: 24.1 }, inspection: 'recovered' };
+  assert.doesNotMatch(answer('Explain this reading', cool), /No inspection prompt/);
+});
+
+test('reading reply marks stale values', () => {
+  assert.match(answer('Explain this reading', { ...ctx, stale: true }), /stale/);
+});
+
+test('refuses cause and action questions without suggesting either', () => {
+  for (const question of ['Why is it so hot?', 'What should I do about the temperature?', 'Should I open the vents?', 'How do I cool the birds?', 'What is the cause?', 'Any advice for the flock?']) {
+    const text = answer(question, ctx);
+    assert.match(text, /can't say why readings change or what to do for the flock/, question);
+  }
+  assert.match(answer('How does the demo work?', ctx), /simulated ESP32/, 'demo question still answered');
+  assert.match(answer('Explain this reading', ctx), /House 1 reads/, 'reading question still answered');
+});
+
+test('no reply suggests a cause, diagnosis, or flock action', () => {
+  const contexts = [ctx, { ...ctx, reading: null }, { ...ctx, inspection: 'recovered', stale: true },
+    { ...ctx, summary: summarize([{ t: 1, temperatureC: 24, source: 'live' }, { t: 2, temperatureC: 26, source: 'replay' }], 25) }];
+  const questions = ['Explain this reading', 'Summarize the last 24 hours', 'How does the demo work?', 'Why is it hot?', 'Is my flock sick?', 'hello'];
+  const banned = /(because|caused by|due to|you should|try |open the|turn on|lower the|add water|ventilate|disease|infection)/i;
+  for (const c of contexts) for (const q of questions) assert.doesNotMatch(answer(q, c), banned, q);
+});
+
+test('history summary says the bridge holds the points', () => {
+  const summary = summarize([{ t: 1, temperatureC: 24, source: 'live' }], 25);
+  assert.match(answer('Summarize the last 24 hours', { ...ctx, summary }), /bridge holds 1 point./);
 });
