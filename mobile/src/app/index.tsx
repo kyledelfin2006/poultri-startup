@@ -13,15 +13,23 @@ export default function HomeScreen() {
   const compact = width < 370 || fontScale >= 1.3;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { reading, samples, alertRecord, status, sampleAgeMs, stale } = useDemoSession();
-  // App-only vent state; follows the simulated fan percentage, as on House 1.
   const fan = reading?.fanSpeedPct;
   const setpointC = reading?.setpointC ?? 25; // firmware's demo setpoint; same fallback as House 1
+  // One vocabulary for the inspection state; acknowledging happens on House 1 only.
+  const inspection = !alertRecord ? 'clear' : alertRecord.recovered ? 'recovered' : alertRecord.acknowledged ? 'acknowledged' : 'inspect';
+  const reviewLabel = { clear: 'No inspection needed', inspect: 'Inspect House 1', acknowledged: 'Acknowledged', recovered: 'Reading recovered' }[inspection];
+  const setpointText = `${+setpointC.toFixed(1)}°C`;
+  const inspectionHelp = {
+    // Kept to one line at phone width.
+    clear: `Prompts appear at the ${setpointText} demo setpoint.`,
+    inspect: `Reached ${setpointText}. Acknowledge it on House 1.`,
+    acknowledged: `Still at or above ${setpointText}.`,
+    recovered: `Below ${setpointText}. Clears with Reset session.`,
+  }[inspection];
+  const warm = inspection === 'inspect' || inspection === 'acknowledged'; // still at or above the setpoint
+  // App-only vent state; follows the simulated fan percentage, as on House 1.
   const ventState = fan === undefined ? '—' : fan === 0 ? 'Closed' : fan === 50 ? 'Half-open' : fan === 100 ? 'Open' : 'Partly open';
-  const needsAttention = !!alertRecord && !alertRecord.recovered;
   const statusWarning = stale || status.startsWith('Disconnected');
-  const reviewLabel = alertRecord
-    ? alertRecord.recovered ? 'Reading recovered' : alertRecord.acknowledged ? 'Prompt acknowledged' : 'Inspection needed'
-    : 'No inspection prompt';
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -104,17 +112,20 @@ export default function HomeScreen() {
           />
         </View>
 
-        <View style={styles.inspection}>
-          <Text style={styles.sectionTitle}>Inspection</Text>
-          <View style={styles.inspectionRule} />
-          <View style={[styles.inspectionRow, needsAttention && styles.inspectionRowAlert]}>
-            <View style={[styles.inspectionIcon, needsAttention && styles.inspectionIconAlert]}>
-              <Text style={[styles.inspectionGlyph, needsAttention && styles.inspectionGlyphAlert]}>{needsAttention ? '!' : '✓'}</Text>
+        <View
+          style={[styles.inspectionCard, inspection === 'inspect' && styles.inspectionCardAlert]}
+          accessible
+          accessibilityLabel={`Inspection. ${reviewLabel}. ${inspectionHelp}`}
+          accessibilityLiveRegion="polite"
+        >
+          <Text style={styles.houseLabel}>INSPECTION</Text>
+          <View style={styles.inspectionRow}>
+            <View style={[styles.inspectionIcon, warm && styles.inspectionIconAlert]}>
+              <Text style={[styles.inspectionGlyph, warm && styles.inspectionGlyphAlert]}>{inspection === 'inspect' ? '!' : '✓'}</Text>
             </View>
-            <Text style={[styles.inspectionText, needsAttention && styles.inspectionTextAlert]}>{reviewLabel}</Text>
+            <Text style={[styles.inspectionText, inspection === 'inspect' && styles.inspectionTextAlert]}>{reviewLabel}</Text>
           </View>
-          {alertRecord?.recovered && <Text style={styles.inspectionNote}>Prompt retained until reset</Text>}
-          <View style={styles.inspectionRule} />
+          <Text style={[styles.inspectionHelp, inspection === 'inspect' && styles.inspectionTextAlert]}>{inspectionHelp}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -162,17 +173,15 @@ function createStyles(colors: Palette) {
     verticalDivider: { width: 1, backgroundColor: colors.border },
     metricValue: { ...text.heading, color: colors.ink, fontVariant: ['tabular-nums'] },
     lastKnown: { ...text.caption, color: colors.muted, marginBottom: spacing.md },
-    inspection: { marginTop: spacing.xxl },
-    sectionTitle: { ...text.heading, color: colors.ink, marginBottom: spacing.lg },
-    inspectionRule: { height: 1, backgroundColor: colors.border },
-    inspectionRow: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    inspectionRowAlert: { backgroundColor: colors.alertSurface, paddingHorizontal: spacing.md, borderRadius: radius.card, marginVertical: spacing.sm },
+    inspectionCard: { marginTop: spacing.xxl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: spacing.lg, gap: spacing.sm },
+    inspectionCardAlert: { backgroundColor: colors.alertSurface, borderColor: colors.alertSurface },
+    inspectionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     inspectionIcon: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSurface },
     inspectionIconAlert: { backgroundColor: colors.warningInk },
     inspectionGlyph: { ...text.body, fontWeight: '700', color: colors.greenText },
     inspectionGlyphAlert: { color: colors.alertSurface },
     inspectionText: { ...text.body, fontWeight: '700', color: colors.ink, flexShrink: 1 },
     inspectionTextAlert: { color: colors.warningInk },
-    inspectionNote: { ...text.caption, color: colors.muted, marginBottom: spacing.md },
+    inspectionHelp: { ...text.caption, color: colors.muted },
   });
 }
