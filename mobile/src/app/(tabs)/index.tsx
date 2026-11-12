@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDemoSession } from '../../demo-session';
+import { houseState, stateStyle } from '../../house-state';
 import { SettingsIcon } from '../../tab-icons';
 import { ActionButton, airflowLabel, BrandHeader, MetricIcon, Palette, radius, space, Sparkline, StatusMark, type, usePalette } from '../../ui';
 
@@ -16,6 +17,9 @@ export default function HomeScreen() {
   const needsAttention = !!alertRecord && !alertRecord.recovered;
   const statusWarning = stale || status.startsWith('Disconnected');
   const setpoint = reading?.setpointC ?? 25;
+  const state = houseState(reading, stale, status);
+  const look = stateStyle(state, palette);
+  const pillText = state === 'warm' || state === 'hot' ? look.label : status;
   const reviewLabel = alertRecord
     ? alertRecord.recovered ? 'Recovered' : alertRecord.acknowledged ? 'Acknowledged' : 'Inspect House 1'
     : 'No inspection needed';
@@ -44,22 +48,27 @@ export default function HomeScreen() {
         >
           <View style={styles.cardTop}>
             <Text style={styles.houseTitle}>House 1</Text>
-            <View style={[styles.statusPill, statusWarning && styles.statusPillWarning]}>
-              <View style={[styles.statusDot, statusWarning ? styles.warningDot : reading ? styles.liveDot : styles.waitingDot]} />
-              <Text style={[styles.statusText, statusWarning && styles.statusTextWarning]}>{status}</Text>
+            <View style={[styles.statusPill, { backgroundColor: look.bg, borderColor: look.text }]}>
+              <View style={[styles.pillMark, { backgroundColor: look.text }]}>
+                <StatusMark kind={look.mark} color={look.bg} />
+              </View>
+              <Text style={[styles.statusText, { color: look.text }]}>{pillText}</Text>
             </View>
           </View>
           <View style={styles.primaryMetric}>
-            <Text style={[styles.temperature, compact && styles.temperatureCompact]}>
-              {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
-            </Text>
-            <View style={styles.metricLabelRow}>
-              <MetricIcon kind="temperature" color={palette.muted} />
-              <Text style={styles.metricLabel}>{reading ? `Current temperature · updated ${Math.floor(sampleAgeMs / 1000)}s ago` : 'Current temperature'}</Text>
+            <View style={styles.metricText}>
+              <Text style={[styles.temperature, compact && styles.temperatureCompact]}>
+                {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
+              </Text>
+              <View style={styles.metricLabelRow}>
+                <MetricIcon kind="temperature" color={palette.heroMuted} />
+                <Text style={styles.metricLabel}>{reading ? `Current temperature · updated ${Math.floor(sampleAgeMs / 1000)}s ago` : 'Current temperature'}</Text>
+              </View>
             </View>
+            {!compact && <Image source={require('../../../assets/house-line.png')} style={styles.houseArt} resizeMode="contain" accessible={false} />}
           </View>
           <View style={styles.trend}>
-            <Sparkline values={samples} setpoint={setpoint} barColor={palette.chart} lastColor={palette.ink} lineColor={palette.greenText} />
+            <Sparkline values={samples} setpoint={setpoint} barColor={palette.heroAccent} lastColor={palette.onHero} lineColor={palette.onHero} />
             <Text style={styles.trendCaption}>
               {samples.length < 2 ? 'Collecting samples' : `Since connecting · dashed line: ${setpoint.toFixed(1)}°C demo setpoint`}
             </Text>
@@ -67,7 +76,7 @@ export default function HomeScreen() {
           <View style={styles.secondaryMetrics}>
             <View style={styles.secondaryMetric}>
               <View style={styles.metricLabelRow}>
-                <MetricIcon kind="humidity" color={palette.muted} />
+                <MetricIcon kind="humidity" color={palette.heroMuted} />
                 <Text style={styles.metricLabel}>Humidity</Text>
               </View>
               <Text style={styles.metricValue}>{reading ? `${reading.humidityPct.toFixed(1)}%` : '—'}</Text>
@@ -113,30 +122,27 @@ function createStyles(colors: Palette) {
     sourceRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
     sourceDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.greenText },
     sourceText: { ...type.caption, color: colors.greenText, fontWeight: '700' },
-    houseCard: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border, padding: space.lg },
+    houseCard: { backgroundColor: colors.hero, borderRadius: radius.card, padding: space.lg },
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
-    houseTitle: { ...type.heading, color: colors.ink },
-    statusPill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.greenSurface, flexShrink: 1 },
-    statusPillWarning: { backgroundColor: colors.warningSurface },
-    statusDot: { width: 8, height: 8, borderRadius: 4 },
-    liveDot: { backgroundColor: colors.greenText },
-    waitingDot: { backgroundColor: colors.muted },
-    warningDot: { backgroundColor: colors.warningInk },
-    statusText: { ...type.caption, color: colors.greenText, fontWeight: '700', flexShrink: 1 },
-    statusTextWarning: { color: colors.warningInk },
-    primaryMetric: { marginTop: space.xl },
-    temperature: { ...type.display, color: colors.ink, fontVariant: ['tabular-nums'] },
+    houseTitle: { ...type.heading, color: colors.onHero },
+    statusPill: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 32, paddingLeft: space.xs, paddingRight: space.md, borderRadius: radius.pill, borderWidth: 1, flexShrink: 1 },
+    pillMark: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+    statusText: { ...type.caption, fontWeight: '700', flexShrink: 1 },
+    primaryMetric: { marginTop: space.xl, flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
+    metricText: { flex: 1, minWidth: 0, gap: space.xs },
+    temperature: { ...type.display, color: colors.onHero, fontVariant: ['tabular-nums'] },
     temperatureCompact: { fontSize: 58, lineHeight: 68 },
-    temperatureUnit: { fontSize: 30, letterSpacing: -0.5, color: colors.greenText },
+    temperatureUnit: { fontSize: 30, letterSpacing: -0.5, color: colors.heroAccent },
+    houseArt: { width: 88, height: 60, tintColor: colors.heroAccent },
     metricLabelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-    metricLabel: { ...type.caption, color: colors.muted, flexShrink: 1 },
+    metricLabel: { ...type.caption, color: colors.heroMuted, flexShrink: 1 },
     trend: { marginTop: space.lg, marginBottom: space.lg, gap: space.sm },
-    trendCaption: { ...type.caption, color: colors.muted },
-    secondaryMetrics: { flexDirection: 'row', paddingTop: space.lg, borderTopWidth: 1, borderTopColor: colors.border, gap: space.lg },
+    trendCaption: { ...type.caption, color: colors.heroMuted },
+    secondaryMetrics: { flexDirection: 'row', paddingTop: space.lg, borderTopWidth: 1, borderTopColor: colors.heroLine, gap: space.lg },
     secondaryMetric: { flex: 1, minWidth: 0, gap: space.sm },
-    verticalDivider: { width: 1, backgroundColor: colors.border },
-    metricValue: { ...type.heading, color: colors.ink, fontVariant: ['tabular-nums'] },
-    lastKnown: { ...type.caption, color: colors.warningInk, marginTop: space.md },
+    verticalDivider: { width: 1, backgroundColor: colors.heroLine },
+    metricValue: { ...type.heading, color: colors.onHero, fontVariant: ['tabular-nums'] },
+    lastKnown: { ...type.caption, color: colors.heroMuted, marginTop: space.md },
     cta: { marginTop: space.lg },
     inspection: { marginTop: space.xxl, gap: space.md },
     sectionTitle: { ...type.heading, color: colors.ink },
