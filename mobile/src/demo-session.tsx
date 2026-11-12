@@ -72,7 +72,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [activeUrl, setActiveUrl] = useState('');
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [message, setMessage] = useState('Open House 1 to connect to the Wokwi bridge.');
+  const [message, setMessage] = useState('Connect to the bridge in Settings.');
   const [reading, setReading] = useState<Reading | null>(null);
   const [baseline, setBaseline] = useState<number | null>(null);
   const [alertRecord, setAlertRecord] = useState<AlertRecord | null>(null);
@@ -99,9 +99,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const statusDescription = connecting
     ? message
     : stale
-      ? `Last Wokwi sample received ${Math.floor(sampleAgeMs / 1000)}s ago.`
+      ? `Last Wokwi sample ${Math.floor(sampleAgeMs / 1000)}s ago.`
       : connected
-        ? (reading ? 'Receiving simulated data from the local bridge.' : 'Bridge is ready. Waiting for a Wokwi reading.')
+        ? (reading ? 'Receiving Wokwi simulated data.' : 'Connected. Waiting for Wokwi.')
         : message;
 
   useEffect(() => {
@@ -122,13 +122,13 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     const previous = previousAlertRef.current;
     if (Platform.OS === 'ios' && alertRecord) {
       if (!previous) {
-        AccessibilityInfo.announceForAccessibility('Temperature threshold reached. Please inspect House 1.');
+        AccessibilityInfo.announceForAccessibility('Inspect House 1. Temperature reached the demo setpoint.');
       }
       if (previous && !previous.acknowledged && alertRecord.acknowledged) {
-        AccessibilityInfo.announceForAccessibility('Inspection prompt acknowledged.');
+        AccessibilityInfo.announceForAccessibility('Acknowledged.');
       }
       if (previous && !previous.recovered && alertRecord.recovered) {
-        AccessibilityInfo.announceForAccessibility('Reading recovered. Inspection prompt retained.');
+        AccessibilityInfo.announceForAccessibility('Recovered. Kept until Reset session.');
       }
     }
     previousAlertRef.current = alertRecord;
@@ -220,7 +220,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       setSamples([]);
       setActiveUrl(normalized);
       setConnected(true);
-      setMessage('Connected. Waiting for a fresh Wokwi reading.');
+      setMessage('Connected. Waiting for Wokwi.');
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'request failed';
       setMessage(`Could not connect: ${detail}`);
@@ -244,7 +244,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setAlertRecord(null);
     samplesRef.current = [];
     setSamples([]);
-    setMessage('Demo reset. The next fresh reading becomes the reference.');
+    setMessage('Session reset. The next reading becomes the reference.');
   }
 
   return (

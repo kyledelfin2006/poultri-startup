@@ -109,7 +109,7 @@ export default function HouseDetailScreen() {
             {reading ? reading.temperatureC.toFixed(1) : '—'}<Text style={styles.temperatureUnit}>{reading ? '°C' : ''}</Text>
           </Text>
           <View style={styles.setpointRow}>
-            <Text style={styles.setpointLabel}>Simulation setpoint</Text>
+            <Text style={styles.setpointLabel}>Demo setpoint</Text>
             <Text style={styles.setpointValue}>{reading?.setpointC.toFixed(1) ?? '25.0'}°C</Text>
           </View>
           <View style={styles.secondaryReadings}>
@@ -126,7 +126,7 @@ export default function HouseDetailScreen() {
               <Text style={styles.secondaryValue}>{reading ? `${fanSpeedPct}%` : '—'}</Text>
             </View>
           </View>
-          <Text style={styles.sampleAge}>{reading ? `Updated ${Math.floor(sampleAgeMs / 1000)}s ago${stale ? ' · stale' : ''}` : 'Waiting for a Wokwi reading'}</Text>
+          <Text style={styles.sampleAge}>{reading ? `Updated ${Math.floor(sampleAgeMs / 1000)}s ago${stale ? ' · stale' : ''}` : 'Waiting for Wokwi'}</Text>
           {statusWarning && <Text style={styles.statusDescription}>{statusDescription}</Text>}
         </View>
 
@@ -137,21 +137,23 @@ export default function HouseDetailScreen() {
           </View>
           {!alertRecord ? (
             <View style={styles.clearPanel}>
-              <Text style={styles.clearTitle}>No inspection prompt</Text>
+              <Text style={styles.clearTitle}>No inspection needed</Text>
               <View style={styles.clearBadge}><Text style={styles.clearBadgeText}>Clear</Text></View>
             </View>
           ) : (
             <View style={[styles.alertPanel, alertRecord.recovered && styles.recoveredPanel]}>
               <View style={styles.alertHeading}>
                 <Text style={[styles.alertTitle, alertRecord.recovered && styles.recoveredTitle]}>
-                  {alertRecord.recovered ? 'Reading recovered' : 'Check House 1'}
+                  {alertRecord.recovered ? 'Recovered' : 'Inspect House 1'}
                 </Text>
-                <View style={[styles.alertBadge, alertRecord.recovered && styles.recoveredBadge]}>
-                  <Text style={[styles.alertBadgeText, alertRecord.recovered && styles.recoveredBadgeText]}>{alertRecord.recovered ? 'Recovered' : alertRecord.acknowledged ? 'Acknowledged' : 'Inspect'}</Text>
-                </View>
+                {alertRecord.acknowledged && (
+                  <View style={[styles.alertBadge, alertRecord.recovered && styles.recoveredBadge]}>
+                    <Text style={[styles.alertBadgeText, alertRecord.recovered && styles.recoveredBadgeText]}>Acknowledged</Text>
+                  </View>
+                )}
               </View>
               <Text style={[styles.alertDescription, alertRecord.recovered && styles.recoveredDescription]}>
-                {alertRecord.recovered ? 'Temperature is below the simulation setpoint. Prompt retained until reset.' : `Temperature reached the ${reading?.setpointC.toFixed(1) ?? '25.0'}°C simulation setpoint.`}
+                {alertRecord.recovered ? `Below the ${reading?.setpointC.toFixed(1) ?? '25.0'}°C demo setpoint. Kept until Reset session.` : `Reached the ${reading?.setpointC.toFixed(1) ?? '25.0'}°C demo setpoint.`}
               </Text>
               {!alertRecord.acknowledged && (
                 <ActionButton title="Acknowledge" onPress={acknowledge} palette={palette} />

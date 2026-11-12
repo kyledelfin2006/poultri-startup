@@ -47,3 +47,16 @@ test('summary says when points are replayed sample data', () => {
   const live = answer('Summarize the last 24 hours', { ...ctx, summary: summarize([points[1]], 25) });
   assert.doesNotMatch(live, /replayed/);
 });
+
+test('chart paths break at empty buckets and never bridge missing data', async () => {
+  const { chartPaths } = await import('./history.ts');
+  const { line, area, last, y } = chartPaths([24, 25, null, 26], 400, 100, 23, 27);
+  assert.equal((line.match(/M/g) ?? []).length, 2, 'two separate runs around the gap');
+  assert.equal((area.match(/M/g) ?? []).length, 1, 'only the two-point run gets an area');
+  assert.deepEqual(last, { x: 350, y: 25 });
+  assert.equal(y(27), 0);
+  assert.equal(y(23), 100);
+  const empty = chartPaths([null, null], 400, 100, 23, 27);
+  assert.equal(empty.line, '');
+  assert.equal(empty.last, null);
+});

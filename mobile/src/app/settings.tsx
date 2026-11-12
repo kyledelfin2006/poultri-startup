@@ -27,7 +27,7 @@ export default function SettingsScreen() {
         <ConnectionSection />
         <View style={styles.about}>
           <Text style={styles.aboutTitle}>About this demo</Text>
-          <Text style={styles.aboutText}>All readings are Wokwi simulated data. The 25°C setpoint, the fan levels, and the airflow labels are demo values, not farm settings or poultry-health limits.</Text>
+          <Text style={styles.aboutText}>All readings are Wokwi simulated data. The 25°C demo setpoint, fan levels, and airflow labels are demo values, not farm settings or poultry-health limits.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

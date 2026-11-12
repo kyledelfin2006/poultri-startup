@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 export type Palette = {
@@ -85,10 +86,14 @@ const darkPalette: Palette = {
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const radius = { card: 16, control: 12, pill: 999 } as const;
 
+// Rounded sans for display, title, and heading. Loaded in app/_layout.tsx; body text stays the system font.
+// The font file carries the weight, so these styles set no fontWeight (avoids faux bold).
+export const ROUNDED_FONT = 'Nunito_800ExtraBold';
+
 export const type = {
-  display: { fontSize: 72, lineHeight: 80, fontWeight: '800' as const, letterSpacing: -2.5 },
-  title: { fontSize: 34, lineHeight: 40, fontWeight: '800' as const, letterSpacing: -1 },
-  heading: { fontSize: 20, lineHeight: 26, fontWeight: '800' as const },
+  display: { fontFamily: ROUNDED_FONT, fontSize: 72, lineHeight: 80, letterSpacing: -2.5 },
+  title: { fontFamily: ROUNDED_FONT, fontSize: 34, lineHeight: 40, letterSpacing: -1 },
+  heading: { fontFamily: ROUNDED_FONT, fontSize: 20, lineHeight: 26 },
   body: { fontSize: 16, lineHeight: 22, fontWeight: '400' as const },
   label: { fontSize: 14, lineHeight: 20, fontWeight: '700' as const },
   caption: { fontSize: 13, lineHeight: 18, fontWeight: '400' as const },
@@ -126,27 +131,13 @@ export function MetricIcon({ kind, color }: { kind: 'temperature' | 'humidity'; 
   return <Image source={kind === 'temperature' ? require('../assets/temperature-icon.png') : require('../assets/humidity-icon.png')} style={[styles.metricIcon, { tintColor: color }]} resizeMode="contain" accessible={false} />;
 }
 
-// Icons drawn from borders and bars so no icon package is needed.
+// Icons come from Ionicons (@expo/vector-icons). They are decorative; the surrounding control carries the label.
 export function Chevron({ color, size = 9, direction = 'right' }: { color: string; size?: number; direction?: 'right' | 'left' }) {
-  const rotate = direction === 'right' ? '45deg' : '225deg';
-  return (
-    <View
-      accessible={false}
-      style={{ width: size, height: size, borderTopWidth: 2, borderRightWidth: 2, borderColor: color, transform: [{ rotate }] }}
-    />
-  );
+  return <Ionicons name={direction === 'right' ? 'chevron-forward' : 'chevron-back'} size={size * 2} color={color} accessible={false} />;
 }
 
 export function StatusMark({ kind, color }: { kind: 'check' | 'alert'; color: string }) {
-  if (kind === 'check') {
-    return <View accessible={false} style={{ width: 7, height: 12, marginTop: -3, borderRightWidth: 2.5, borderBottomWidth: 2.5, borderColor: color, transform: [{ rotate: '45deg' }] }} />;
-  }
-  return (
-    <View accessible={false} style={{ alignItems: 'center', gap: 2 }}>
-      <View style={{ width: 3, height: 10, borderRadius: 2, backgroundColor: color }} />
-      <View style={{ width: 3, height: 3, borderRadius: 2, backgroundColor: color }} />
-    </View>
-  );
+  return <Ionicons name={kind === 'check' ? 'checkmark' : 'alert'} size={16} color={color} accessible={false} />;
 }
 
 // Bars from session samples. Hidden from screen readers; callers add a text caption.

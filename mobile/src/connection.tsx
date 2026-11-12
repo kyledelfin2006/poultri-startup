@@ -32,7 +32,7 @@ export function ConnectionSection() {
         <View style={styles.messageRow}>
           <View style={[styles.dot, statusWarning && styles.dotWarning]} />
           <Text style={[styles.message, statusWarning && styles.messageWarning]}>
-            {status === 'Not connected' ? 'Enter the laptop bridge URL, then connect.' : reading && message === 'Connected. Waiting for a fresh Wokwi reading.' ? 'Connected to the local bridge.' : message}
+            {status === 'Not connected' ? 'Enter the bridge URL, then connect.' : reading && message === 'Connected. Waiting for Wokwi.' ? 'Connected to the bridge.' : message}
           </Text>
         </View>
       )}

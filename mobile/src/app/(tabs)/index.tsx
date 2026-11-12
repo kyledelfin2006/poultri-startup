@@ -17,8 +17,8 @@ export default function HomeScreen() {
   const statusWarning = stale || status.startsWith('Disconnected');
   const setpoint = reading?.setpointC ?? 25;
   const reviewLabel = alertRecord
-    ? alertRecord.recovered ? 'Reading recovered' : alertRecord.acknowledged ? 'Prompt acknowledged' : 'Inspection needed'
-    : 'No inspection prompt';
+    ? alertRecord.recovered ? 'Recovered' : alertRecord.acknowledged ? 'Acknowledged' : 'Inspect House 1'
+    : 'No inspection needed';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -30,7 +30,7 @@ export default function HomeScreen() {
           </Pressable>
         </View>
         <View style={styles.heading}>
-          <Text accessibilityRole="header" style={styles.title}>Overview</Text>
+          <Text accessibilityRole="header" style={styles.title}>House overview</Text>
           <View style={styles.sourceRow}>
             <View style={styles.sourceDot} />
             <Text style={styles.sourceText}>Wokwi simulated data</Text>
@@ -61,7 +61,7 @@ export default function HomeScreen() {
           <View style={styles.trend}>
             <Sparkline values={samples} setpoint={setpoint} barColor={palette.chart} lastColor={palette.ink} lineColor={palette.greenText} />
             <Text style={styles.trendCaption}>
-              {samples.length < 2 ? 'Collecting samples' : `Since connecting · dashed line is the ${setpoint.toFixed(1)}°C demo setpoint`}
+              {samples.length < 2 ? 'Collecting samples' : `Since connecting · dashed line: ${setpoint.toFixed(1)}°C demo setpoint`}
             </Text>
           </View>
           <View style={styles.secondaryMetrics}>
@@ -94,7 +94,7 @@ export default function HomeScreen() {
             </View>
             <Text style={[styles.inspectionText, needsAttention && styles.inspectionTextAlert]}>{reviewLabel}</Text>
           </View>
-          {alertRecord?.recovered && <Text style={styles.inspectionNote}>Prompt retained until reset</Text>}
+          {alertRecord?.recovered && <Text style={styles.inspectionNote}>Kept until Reset session</Text>}
         </View>
       </ScrollView>
     </SafeAreaView>

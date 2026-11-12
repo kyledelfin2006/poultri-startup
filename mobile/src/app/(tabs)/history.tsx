@@ -69,12 +69,12 @@ export default function HistoryScreen() {
           )}
           {!activeUrl ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>Connect to the bridge to load recorded history.</Text>
+              <Text style={styles.emptyText}>Connect to the bridge to see history.</Text>
               <ActionButton title="Open settings" onPress={() => router.push('/settings')} palette={palette} />
             </View>
           ) : points.length === 0 ? (
             <Text style={styles.emptyText}>
-              {error && !loaded ? `Could not load history: ${error}` : 'No history yet. The bridge records one point every 10 seconds while the simulation runs.'}
+              {error && !loaded ? `Could not load history: ${error}` : 'No history yet. Start the Wokwi simulation to record points.'}
             </Text>
           ) : (
             <>
@@ -93,7 +93,7 @@ export default function HistoryScreen() {
           {stat('Max', summary?.max)}
         </View>
 
-        <Text style={styles.note}>Recorded by the bridge, one point every 10 seconds. History clears when the bridge restarts.</Text>
+        <Text style={styles.note}>One point every 10 seconds. Clears when the bridge restarts.</Text>
 
         <Pressable
           accessibilityRole="button"

@@ -39,3 +39,25 @@ export function bucketize(points: HistoryPoint[], from: number, to: number, buck
   }
   return sums.map((sum, index) => (counts[index] ? sum / counts[index] : null));
 }
+
+// Line and area paths through bucketed averages. Empty buckets break the line instead of bridging it,
+// so the chart never implies readings that were not recorded.
+export function chartPaths(buckets: (number | null)[], width: number, height: number, lo: number, hi: number) {
+  const x = (index: number) => ((index + 0.5) / buckets.length) * width;
+  const y = (value: number) => height - ((value - lo) / (hi - lo)) * height;
+  const runs: { index: number; value: number }[][] = [];
+  buckets.forEach((value, index) => {
+    if (value === null) return;
+    const run = runs.at(-1);
+    if (run && run.at(-1)!.index === index - 1) run.push({ index, value });
+    else runs.push([{ index, value }]);
+  });
+  const fmt = (n: number) => n.toFixed(1);
+  const line = runs.map((run) => run.map((p, i) => `${i ? 'L' : 'M'}${fmt(x(p.index))} ${fmt(y(p.value))}`).join(' ')).join(' ');
+  const area = runs
+    .filter((run) => run.length > 1)
+    .map((run) => `M${fmt(x(run[0].index))} ${height} ${run.map((p) => `L${fmt(x(p.index))} ${fmt(y(p.value))}`).join(' ')} L${fmt(x(run.at(-1)!.index))} ${height} Z`)
+    .join(' ');
+  const last = runs.at(-1)?.at(-1);
+  return { line, area, last: last ? { x: x(last.index), y: y(last.value) } : null, y };
+}

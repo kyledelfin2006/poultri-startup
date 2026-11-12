@@ -67,6 +67,10 @@ Added: Home, History, and Buddy tabs plus a Settings screen; bridge `/api/histor
 
 Added: `bridge/seed.mjs` (`npm run seed`) posts a fixed 24-hour simulated sequence (288 points, one per 5 minutes) to `POST /api/history/replay`; `--clear` calls `DELETE /api/history/replay`. The bridge tags every history point `live` or `replay`. History shows "Includes replayed sample data" with the replayed count whenever replayed points are in range, and Buddy's summary says how many points are replayed. Unlabeled points from an older bridge are treated as replayed. Checked 2026-11-12: `npm test` in `bridge/` (6 tests) and `mobile/` (6 tests), `tsc`, `expo lint`, and the replay, label, Buddy summary, and clear in the web preview. Not checked on a phone or emulator.
 
+## Chart, icons, font, and copy (branch `ui-visual-accessibility`)
+
+Approved packages: `react-native-svg` (History line and area chart; gaps in data break the line instead of bridging it), `@expo/vector-icons` (Ionicons for the tab, settings, chevron, and status icons), and `@expo-google-fonts/nunito` (Nunito ExtraBold for the display, title, and heading styles, loaded in `app/_layout.tsx`; body text stays the system font). Copy uses one state vocabulary: No inspection needed, Inspect House 1, Acknowledged, Recovered; "demo setpoint" replaces "simulation setpoint"; "Wokwi simulated data" and "Reset session" are unchanged. Checked 2026-11-12: `npm test` in `mobile/` (7 tests), `tsc`, `expo lint`, and the web preview in light and dark. Not checked on a phone or emulator.
+
 ## Follow-up work
 
 Use [mvp-requirements.md](mvp-requirements.md) for intended behavior and [build-requirements.md](build-requirements.md) for architecture, interfaces, implementation order, and verification. Do not add features outside those documents without new instructions.

@@ -23,7 +23,7 @@ export function answer(question: string, ctx: BuddyContext): string {
 
   if (/(summar|history|trend|hours|average|min|max|last)/.test(q)) {
     const { summary, hours } = ctx;
-    if (!summary) return `No history yet. The bridge records one point every 10 seconds once the simulation runs, and the last ${hours} hours will fill in from there.`;
+    if (!summary) return `No history yet for the last ${hours} hours. Start the Wokwi simulation; the bridge records a point every 10 seconds.`;
     const setpoint = ctx.reading?.setpointC ?? 25;
     return `In the last ${hours} hours the bridge recorded ${summary.count} points. Low ${summary.min.toFixed(1)}°C, average ${summary.avg.toFixed(1)}°C, high ${summary.max.toFixed(1)}°C. ${summary.atOrAboveSetpoint} of ${summary.count} points were at or above the ${setpoint.toFixed(1)}°C demo setpoint. ${summary.replayed ? `${summary.replayed} of these points are replayed sample data, not from this Wokwi run. ` : ''}This is simulated data.`;
   }

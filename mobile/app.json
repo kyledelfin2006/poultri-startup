@@ -29,7 +29,8 @@
     "plugins": [
       "expo-system-ui",
       "expo-router",
-      "./plugins/with-local-bridge-http"
+      "./plugins/with-local-bridge-http",
+      "expo-font"
     ],
     "extra": {
       "router": {},
