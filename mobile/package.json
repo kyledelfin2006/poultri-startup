@@ -32,7 +32,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --test src/buddy.test.mjs",
+    "test": "node --test src/*.test.mjs",
+    "contrast": "node scripts/check-contrast.mjs",
     "build:apk": "npx eas-cli@latest build --platform android --profile preview"
   },
   "private": true
