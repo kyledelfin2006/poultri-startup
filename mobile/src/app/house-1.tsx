@@ -166,38 +166,37 @@ export default function HouseDetailScreen() {
           <View style={styles.airflowColumns}>
             <View style={styles.airflowColumn}>
               <Text style={styles.airflowLabel}>Simulated fan</Text>
-              <View style={styles.fanHousing} accessible={false}>
-                {reading ? (
-                  <Animated.View style={[styles.fanRotor, { transform: [{ rotate: fanAngle }] }]}>
-                    {[0, 120, 240].map((angle) => (
-                      <View key={angle} style={[styles.fanArm, { transform: [{ rotate: `${angle}deg` }] }]}>
-                        <View style={styles.fanBlade} />
-                      </View>
-                    ))}
-                    <View style={styles.fanHub} />
-                  </Animated.View>
-                ) : <Text style={styles.visualPlaceholder}>—</Text>}
+              <Text style={styles.airflowState}>{fanState}</Text>
+              <View style={styles.drawingTile}>
+                <View style={styles.fanHousing} accessible={false}>
+                  {reading ? (
+                    <Animated.View style={[styles.fanRotor, { transform: [{ rotate: fanAngle }] }]}>
+                      {[0, 120, 240].map((angle) => (
+                        <View key={angle} style={[styles.fanArm, { transform: [{ rotate: `${angle}deg` }] }]}>
+                          <View style={styles.fanBlade} />
+                        </View>
+                      ))}
+                      <View style={styles.fanHub} />
+                    </Animated.View>
+                  ) : <Text style={styles.visualPlaceholder}>—</Text>}
+                </View>
               </View>
-              <View style={styles.airflowValueRow}>
-                <Text style={styles.airflowState}>{fanState}</Text>
-                <Text style={styles.airflowPercent}>{reading ? `${fanSpeedPct}%` : '—'}</Text>
-              </View>
+              <Text style={styles.airflowPercent}>{reading ? `${fanSpeedPct}%` : '—'}</Text>
             </View>
             <View style={styles.airflowDivider} />
             <View style={styles.airflowColumn}>
               <Text style={styles.airflowLabel}>Simulated vent</Text>
-              <View style={styles.ventFrame} accessible={false}>
-                {reading ? [0, 1, 2, 3].map((slat) => (
-                  <Animated.View key={slat} style={[styles.ventSlat, { transform: [{ perspective: 300 }, { rotateX: ventAngle }] }]} />
-                )) : <Text style={styles.visualPlaceholder}>—</Text>}
+              <Text style={styles.airflowState}>{ventState}</Text>
+              <View style={styles.drawingTile}>
+                <View style={styles.ventFrame} accessible={false}>
+                  {reading ? [0, 1, 2, 3].map((slat) => (
+                    <Animated.View key={slat} style={[styles.ventSlat, { transform: [{ perspective: 300 }, { rotateX: ventAngle }] }]} />
+                  )) : <Text style={styles.visualPlaceholder}>—</Text>}
+                </View>
               </View>
-              <View style={styles.airflowValueRow}>
-                <Text style={styles.airflowState}>{ventState}</Text>
-                <Text style={styles.airflowPercent}>{reading ? `${fanSpeedPct}%` : '—'}</Text>
-              </View>
+              <Text style={styles.airflowPercent}>{reading ? `${fanSpeedPct}%` : '—'}</Text>
             </View>
           </View>
-          <View style={styles.airflowBottomRule} />
           <Text style={styles.airflowNote}>Visual only · no equipment connected</Text>
           {!!visualDataState && <Text style={styles.airflowDataState}>{visualDataState}</Text>}
         </View>
@@ -267,22 +266,22 @@ function createStyles(colors: Palette) {
     airflowCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: spacing.xl, marginTop: spacing.xxl },
     airflowTitle: { ...text.heading, color: colors.ink, marginBottom: spacing.lg },
     airflowColumns: { flexDirection: 'row', gap: spacing.md },
-    airflowColumn: { flex: 1, minWidth: 0, alignItems: 'center' },
+    airflowColumn: { flex: 1, minWidth: 0, alignItems: 'stretch', gap: spacing.xs },
     airflowDivider: { width: 1, backgroundColor: colors.border },
-    airflowLabel: { ...text.caption, color: colors.muted, alignSelf: 'flex-start', marginBottom: spacing.md },
+    // Light green tile behind each drawing; lime parts carry a greenText outline for ≥3:1 shape contrast.
+    drawingTile: { alignItems: 'center', justifyContent: 'center', minHeight: 116, borderRadius: radius.card, backgroundColor: colors.greenSurface, marginVertical: spacing.sm },
+    airflowLabel: { ...text.caption, color: colors.muted },
     fanHousing: { width: 84, height: 84, borderRadius: radius.pill, borderWidth: 4, borderColor: colors.greenText, alignItems: 'center', justifyContent: 'center' },
     fanRotor: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
     fanArm: { position: 'absolute', width: 72, height: 72, alignItems: 'center' },
-    fanBlade: { width: 15, height: 24, marginTop: spacing.xs, borderRadius: radius.pill, backgroundColor: colors.greenText },
+    fanBlade: { width: 15, height: 24, marginTop: spacing.xs, borderRadius: radius.pill, backgroundColor: colors.lime, borderWidth: 1, borderColor: colors.greenText },
     fanHub: { width: 20, height: 20, borderRadius: radius.pill, backgroundColor: colors.greenText },
     ventFrame: { width: 88, height: 84, borderRadius: radius.card, borderWidth: 3, borderColor: colors.greenText, alignItems: 'center', justifyContent: 'space-around', paddingVertical: spacing.sm },
-    ventSlat: { width: 65, height: 11, borderRadius: radius.pill, backgroundColor: colors.greenText },
+    ventSlat: { width: 65, height: 11, borderRadius: radius.pill, backgroundColor: colors.lime, borderWidth: 1, borderColor: colors.greenText },
     visualPlaceholder: { ...text.title, fontWeight: '400', color: colors.muted },
-    airflowValueRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', alignSelf: 'stretch', gap: spacing.xs, marginTop: spacing.md },
-    airflowState: { ...text.body, fontWeight: '800', color: colors.ink, flexShrink: 1 },
-    airflowPercent: { ...text.body, fontWeight: '800', color: colors.greenText, fontVariant: ['tabular-nums'] },
-    airflowBottomRule: { height: 1, backgroundColor: colors.border, marginTop: spacing.lg, marginBottom: spacing.md },
-    airflowNote: { ...text.caption, color: colors.muted },
+    airflowState: { ...text.body, fontWeight: '800', color: colors.ink },
+    airflowPercent: { ...text.heading, color: colors.greenText, textAlign: 'center', fontVariant: ['tabular-nums'] },
+    airflowNote: { ...text.caption, color: colors.muted, marginTop: spacing.lg },
     airflowDataState: { ...text.caption, color: colors.greenText, marginTop: spacing.xs },
     connectionSection: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: spacing.xxl, paddingTop: spacing.xxl, gap: spacing.md },
     reset: { marginTop: spacing.lg },
