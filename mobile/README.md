@@ -15,7 +15,7 @@ npx.cmd expo start
 
 Scan the QR code with Expo Go. Keep the development server running while using the app.
 
-Open the **House 1** overview card, then enter the laptop's private Wi-Fi IPv4 URL with port `4174` on the detail screen (for example, `http://192.168.1.20:4174`) and tap **Connect to bridge**. Keep the phone and laptop on the same Wi-Fi. Wokwi must be running and posting samples to the bridge. See the root [build guide](../build-requirements.md) for complete setup.
+Tap **View House 1** on the overview card, then enter the laptop's private Wi-Fi IPv4 URL with port `4174` on the detail screen (for example, `http://192.168.1.20:4174`) and tap **Connect to bridge**. Keep the phone and laptop on the same Wi-Fi. Wokwi must be running and posting samples to the bridge. See the root [build guide](../build-requirements.md) for complete setup.
 
 ## Preview in a browser
 

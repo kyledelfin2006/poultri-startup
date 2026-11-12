@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDemoSession } from '../demo-session';
 import { TrendLine } from '../trend-line';
-import { BrandHeader, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
+import { ActionButton, BrandHeader, Palette, displayCompact, radius, spacing, text, usePalette } from '../ui';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -53,12 +53,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Pressable
-          onPress={() => router.push('/house-1')}
-          accessibilityRole="button"
-          accessibilityLabel={`Open House 1. Wokwi simulated data. Temperature ${reading ? `${reading.temperatureC.toFixed(1)} degrees Celsius` : 'unavailable'}, humidity ${reading ? `${reading.humidityPct.toFixed(1)} percent` : 'unavailable'}, simulated fan ${reading ? `${reading.fanSpeedPct} percent` : 'unavailable'}. ${status}. ${reviewLabel}.`}
-          style={({ pressed }) => [styles.houseCard, pressed && styles.pressed]}
-        >
+        <View style={styles.houseCard}>
           <View style={styles.cardTop}>
             <Text style={styles.houseLabel}>HOUSE 1</Text>
             <Text style={styles.updated}>{reading ? `Updated ${Math.floor(sampleAgeMs / 1000)}s ago` : 'No readings yet'}</Text>
@@ -99,11 +94,15 @@ export default function HomeScreen() {
             </View>
           </View>
           {reading && statusWarning && <Text style={styles.lastKnown}>Last sample {Math.floor(sampleAgeMs / 1000)}s ago · last known values</Text>}
-          <View style={styles.cardFooter}>
-            <Text style={styles.openLabel}>Open House 1</Text>
-            <Text style={styles.openArrow}>↗</Text>
-          </View>
-        </Pressable>
+          <ActionButton
+            title="View House 1"
+            onPress={() => router.push('/house-1')}
+            palette={palette}
+            primary
+            chevron
+            accessibilityLabel={`View House 1. Wokwi simulated data. Temperature ${reading ? `${reading.temperatureC.toFixed(1)} degrees Celsius` : 'unavailable'}, humidity ${reading ? `${reading.humidityPct.toFixed(1)} percent` : 'unavailable'}, simulated fan ${reading ? `${reading.fanSpeedPct} percent` : 'unavailable'}. ${status}. ${reviewLabel}.`}
+          />
+        </View>
 
         <View style={styles.inspection}>
           <Text style={styles.sectionTitle}>Inspection</Text>
@@ -138,7 +137,6 @@ function createStyles(colors: Palette) {
     sourceDot: { width: 7, height: 7, borderRadius: radius.pill, backgroundColor: colors.greenText },
     sourceText: { ...text.label, color: colors.greenText },
     houseCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: spacing.xl },
-    pressed: { opacity: 0.84 },
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
     houseLabel: { ...text.label, color: colors.ink },
     updated: { ...text.caption, color: colors.muted, flexShrink: 1, textAlign: 'right' },
@@ -164,9 +162,6 @@ function createStyles(colors: Palette) {
     verticalDivider: { width: 1, backgroundColor: colors.border },
     metricValue: { ...text.heading, color: colors.ink, fontVariant: ['tabular-nums'] },
     lastKnown: { ...text.caption, color: colors.muted, marginBottom: spacing.md },
-    cardFooter: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    openLabel: { ...text.body, fontWeight: '800', color: colors.greenText },
-    openArrow: { ...text.heading, fontWeight: '400', color: colors.greenText },
     inspection: { marginTop: spacing.xxl },
     sectionTitle: { ...text.heading, color: colors.ink, marginBottom: spacing.lg },
     inspectionRule: { height: 1, backgroundColor: colors.border },

@@ -31,6 +31,7 @@ export type Palette = {
   greenText: string;
   lime: string;
   primary: string;
+  primaryPressed: string;
   onPrimary: string;
   alertSurface: string;
   greenSurface: string;
@@ -55,6 +56,7 @@ const lightPalette: Palette = {
   greenText: '#2C5E3B',
   lime: '#B5E04A',
   primary: '#B5E04A', // lime primary action
+  primaryPressed: '#8FBC2E', // darker fill while pressed; onPrimary stays ≥4.5:1
   onPrimary: '#0F2E1F',
   alertSurface: '#F7DCCB',
   greenSurface: '#DDEBCF',
@@ -78,6 +80,7 @@ const darkPalette: Palette = {
   greenText: '#B5E04A',
   lime: '#B5E04A',
   primary: '#B5E04A',
+  primaryPressed: '#8FBC2E',
   onPrimary: '#0F2E1F',
   alertSurface: '#4A2A1F',
   greenSurface: '#223829',
@@ -122,37 +125,54 @@ export function ActionButton({
   palette,
   disabled = false,
   secondary = false,
+  primary = false,
+  chevron = false,
+  accessibilityLabel,
 }: {
   title: string;
   onPress: () => void;
   palette: Palette;
   disabled?: boolean;
   secondary?: boolean;
+  primary?: boolean; // lime fill, dark text; pressed state darkens the fill
+  chevron?: boolean;
+  accessibilityLabel?: string;
 }) {
+  const fill = primary ? palette.primary : secondary ? 'transparent' : palette.forest;
+  const ink = primary ? palette.onPrimary : secondary ? palette.greenText : palette.onForest;
   const componentStyles = StyleSheet.create({
     button: {
       minHeight: 50,
       borderRadius: radius.pill,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      gap: spacing.sm,
       paddingHorizontal: 18,
-      backgroundColor: secondary ? 'transparent' : palette.forest,
+      backgroundColor: fill,
       borderWidth: secondary ? 1 : 0,
       borderColor: palette.inputBorder,
       opacity: disabled ? 0.5 : 1,
     },
-    text: { color: secondary ? palette.greenText : palette.onForest, fontSize: 15, fontWeight: '700' as const },
+    text: { color: ink, fontSize: 15, fontWeight: '700' as const },
+    // Chevron drawn with two borders; an icon package needs approval (AGENTS.md).
+    chevron: { width: 8, height: 8, borderTopWidth: 2, borderRightWidth: 2, borderColor: ink, transform: [{ rotate: '45deg' }] },
   });
 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [componentStyles.button, pressed && !disabled && { opacity: 0.78 }]}
+      style={({ pressed }) => [
+        componentStyles.button,
+        pressed && !disabled && (primary ? { backgroundColor: palette.primaryPressed } : { opacity: 0.78 }),
+      ]}
     >
       <Text style={componentStyles.text}>{title}</Text>
+      {chevron && <View style={componentStyles.chevron} accessible={false} />}
     </Pressable>
   );
 }
