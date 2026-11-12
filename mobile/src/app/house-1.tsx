@@ -23,12 +23,15 @@ export default function HouseDetailScreen() {
   const compact = width < 370 || fontScale >= 1.3;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const {
-    connected, reading, baseline, alertRecord, sampleAgeMs, stale, status,
+    bridgeUrl, connected, reading, baseline, alertRecord, sampleAgeMs, stale, status,
     statusDescription, acknowledge, resetDemo,
   } = useDemoSession();
   const fanSpeedPct = reading?.fanSpeedPct;
   const statusWarning = stale || status.startsWith('Disconnected');
   const [reduceMotion, setReduceMotion] = useState(true);
+  const [bridgeOpen, setBridgeOpen] = useState(false); // set-up work, collapsed for the presenter
+  const bridgeHost = bridgeUrl.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+  const bridgeSummary = bridgeHost && status !== 'Not connected' ? `${status} · ${bridgeHost}` : status;
   const [fanRotation] = useState(() => new Animated.Value(0));
   const fanAngle = useMemo(() => fanRotation.interpolate({
     inputRange: [0, 1],
@@ -201,10 +204,27 @@ export default function HouseDetailScreen() {
           {!!visualDataState && <Text style={styles.airflowDataState}>{visualDataState}</Text>}
         </View>
 
+        <View style={styles.reset}><ActionButton title="Reset session" onPress={resetDemo} palette={palette} secondary /></View>
+
         <View style={styles.connectionSection}>
-          <Text style={styles.sectionTitle}>Connection</Text>
-          <BridgeConnectionFields palette={palette} />
-          <View style={styles.reset}><ActionButton title="Reset session" onPress={resetDemo} palette={palette} secondary /></View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Bridge connection. ${bridgeSummary}`}
+            accessibilityHint={bridgeOpen ? 'Hides the bridge URL field.' : 'Shows the bridge URL field.'}
+            aria-expanded={bridgeOpen}
+            onPress={() => setBridgeOpen((open) => !open)}
+            style={styles.bridgeHeader}
+          >
+            <View style={styles.bridgeHeaderText}>
+              <Text style={styles.sectionTitle}>Bridge connection</Text>
+              <View style={styles.bridgeStateRow}>
+                <View style={[styles.connectionDot, statusWarning && styles.connectionDotWarning]} />
+                <Text style={[styles.bridgeState, statusWarning && styles.connectionTextWarning]} numberOfLines={1}>{bridgeSummary}</Text>
+              </View>
+            </View>
+            <Icon name={bridgeOpen ? 'chevron-up' : 'chevron-down'} color={palette.greenText} size={20} />
+          </Pressable>
+          {bridgeOpen && <BridgeConnectionFields palette={palette} />}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -283,7 +303,11 @@ function createStyles(colors: Palette) {
     airflowPercent: { ...text.heading, color: colors.greenText, textAlign: 'center', fontVariant: ['tabular-nums'] },
     airflowNote: { ...text.caption, color: colors.muted, marginTop: spacing.lg },
     airflowDataState: { ...text.caption, color: colors.greenText, marginTop: spacing.xs },
-    connectionSection: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: spacing.xxl, paddingTop: spacing.xxl, gap: spacing.md },
-    reset: { marginTop: spacing.lg },
+    reset: { marginTop: spacing.xl },
+    connectionSection: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: spacing.xl, paddingTop: spacing.sm, gap: spacing.md },
+    bridgeHeader: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    bridgeHeaderText: { flex: 1, minWidth: 0, gap: spacing.xs },
+    bridgeStateRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    bridgeState: { ...text.caption, color: colors.greenText, flexShrink: 1 },
   });
 }

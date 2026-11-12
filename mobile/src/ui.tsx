@@ -182,6 +182,8 @@ const ICONS = {
   alert: 'alert',
   'chevron-left': 'chevron-back',
   'chevron-right': 'chevron-forward',
+  'chevron-down': 'chevron-down',
+  'chevron-up': 'chevron-up',
   settings: 'options-outline',
 } as const satisfies Record<string, keyof typeof Ionicons.glyphMap>;
 
