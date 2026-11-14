@@ -282,6 +282,8 @@ function json(response, status, value) {
   response.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    // Web preview runs on another origin; the bridge is local-only, so any origin may read it.
+    'access-control-allow-origin': '*',
   });
   response.end(JSON.stringify(value));
 }
@@ -319,6 +321,16 @@ function readJson(request) {
 
 async function route(request, response) {
   const url = new URL(request.url ?? '/', 'http://localhost');
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, {
+      'access-control-allow-origin': '*',
+      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+    });
+    response.end();
+    return;
+  }
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     json(response, 200, { ok: true });
@@ -391,6 +403,9 @@ Allow Node through Windows Firewall on **Private networks only** if prompted. Ch
 | Request | Result |
 |---|---|
 | `GET /api/health` | `200 { "ok": true }` |
+| `GET /api/history?hours=N` (1 to 24, default 24) | `200 { "points": [{ "t": <epoch ms>, "temperatureC": 24.0, "source": "live" }] }`; one live point per 10 seconds, kept in memory; `source` is `live` (Wokwi) or `replay` (seed script); `400` for an invalid `hours` |
+| `POST /api/history/replay` | JSON `{ "points": [{ "t": <epoch ms>, "temperatureC": 24.0 }] }`, 1 to 1440 points within the last 24 hours; replaces any earlier replay and stores the points as `replay`; `201 { "ok": true, "added": N }`; one invalid point rejects the whole batch with `400` |
+| `DELETE /api/history/replay` | Removes replayed points only; `200 { "ok": true, "removed": N }` |
 | `GET /api/reading` before data | `200 { "reading": null }` |
 | `POST /api/reading` | JSON `{ "temperatureC": 24.0, "humidityPct": 60.0, "setpointC": 25.0, "alertActive": false, "fanSpeedPct": 0 }`; success is `201 { "ok": true }` |
 | `GET /api/reading` after data | `200 { "reading": { "temperatureC": 24.0, "humidityPct": 60.0, "setpointC": 25.0, "alertActive": false, "fanSpeedPct": 0, "receivedAt": "<ISO-8601>" } }` |

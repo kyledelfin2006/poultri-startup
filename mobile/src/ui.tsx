@@ -1,73 +1,30 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import type { MarkKind } from './house-state';
+import { darkPalette, lightPalette, type Palette } from './palette';
 
-export type Palette = {
-  background: string;
-  surface: string;
-  ink: string;
-  body: string;
-  muted: string;
-  quiet: string;
-  border: string;
-  forest: string;
-  greenText: string;
-  lime: string;
-  alertSurface: string;
-  greenSurface: string;
-  inputBorder: string;
-  onForest: string;
-  onForestMuted: string;
-  onForestAccent: string;
-  forestRaised: string;
-  forestLine: string;
-  warningSurface: string;
-  warningInk: string;
-};
+export type { Palette };
 
-const lightPalette: Palette = {
-  background: '#F2F0E9',
-  surface: '#F2F0E9',
-  ink: '#1C2B26',
-  body: '#263630',
-  muted: '#64766B',
-  quiet: '#75877A',
-  border: '#C8D0C4',
-  forest: '#263630',
-  greenText: '#355B45',
-  lime: '#A9CE83',
-  alertSurface: '#EBC9B0',
-  greenSurface: '#D8E5D2',
-  inputBorder: '#A7B9A8',
-  onForest: '#F5F7EF',
-  onForestMuted: '#D0DED0',
-  onForestAccent: '#B8DB91',
-  forestRaised: '#405E49',
-  forestLine: '#657B6A',
-  warningSurface: '#EBC9B0',
-  warningInk: '#693D31',
-};
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
+export const radius = { card: 16, control: 12, pill: 999 } as const;
 
-const darkPalette: Palette = {
-  background: '#18241E',
-  surface: '#24342B',
-  ink: '#F4F5ED',
-  body: '#E5EBDD',
-  muted: '#B8CAB6',
-  quiet: '#A8BBA9',
-  border: '#526659',
-  forest: '#263630',
-  greenText: '#C4DFA9',
-  lime: '#A9CE83',
-  alertSurface: '#5D4035',
-  greenSurface: '#344B3A',
-  inputBorder: '#718675',
-  onForest: '#F5F7EF',
-  onForestMuted: '#D0DED0',
-  onForestAccent: '#B8DB91',
-  forestRaised: '#405E49',
-  forestLine: '#657B6A',
-  warningSurface: '#5D4035',
-  warningInk: '#FFE0CB',
-};
+// Rounded sans for display, title, and heading. Loaded in app/_layout.tsx; body text stays the system font.
+// The font file carries the weight, so these styles set no fontWeight (avoids faux bold).
+export const ROUNDED_FONT = 'Nunito_800ExtraBold';
+
+export const type = {
+  display: { fontFamily: ROUNDED_FONT, fontSize: 72, lineHeight: 80, letterSpacing: -2.5 },
+  title: { fontFamily: ROUNDED_FONT, fontSize: 34, lineHeight: 40, letterSpacing: -1 },
+  heading: { fontFamily: ROUNDED_FONT, fontSize: 20, lineHeight: 26 },
+  body: { fontSize: 16, lineHeight: 22, fontWeight: '400' as const },
+  label: { fontSize: 14, lineHeight: 20, fontWeight: '700' as const },
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: '400' as const },
+} as const;
+
+// Derived from the simulated fan percentage; no separate airflow measurement exists.
+export function airflowLabel(fanSpeedPct: number) {
+  return fanSpeedPct === 0 ? 'Still' : fanSpeedPct < 75 ? 'Moderate' : 'Strong';
+}
 
 export function usePalette() {
   return useColorScheme() === 'dark' ? darkPalette : lightPalette;
@@ -96,6 +53,39 @@ export function MetricIcon({ kind, color }: { kind: 'temperature' | 'humidity'; 
   return <Image source={kind === 'temperature' ? require('../assets/temperature-icon.png') : require('../assets/humidity-icon.png')} style={[styles.metricIcon, { tintColor: color }]} resizeMode="contain" accessible={false} />;
 }
 
+// Icons come from Ionicons (@expo/vector-icons). They are decorative; the surrounding control carries the label.
+export function Chevron({ color, size = 9, direction = 'right' }: { color: string; size?: number; direction?: 'right' | 'left' }) {
+  return <Ionicons name={direction === 'right' ? 'chevron-forward' : 'chevron-back'} size={size * 2} color={color} accessible={false} />;
+}
+
+export function StatusMark({ kind, color }: { kind: MarkKind; color: string }) {
+  if (kind === 'alert2') {
+    return (
+      <View accessible={false} style={{ flexDirection: 'row' }}>
+        <Ionicons name="alert" size={14} color={color} accessible={false} />
+        <Ionicons name="alert" size={14} color={color} accessible={false} />
+      </View>
+    );
+  }
+  return <Ionicons name={kind === 'check' ? 'checkmark' : kind === 'dash' ? 'remove' : 'alert'} size={16} color={color} accessible={false} />;
+}
+
+// Bars from session samples. Hidden from screen readers; callers add a text caption.
+export function Sparkline({ values, setpoint, barColor, lastColor, lineColor, height = 56 }: { values: number[]; setpoint: number; barColor: string; lastColor: string; lineColor: string; height?: number }) {
+  if (values.length < 2) return null;
+  const lo = Math.min(...values, setpoint) - 0.5;
+  const hi = Math.max(...values, setpoint) + 0.5;
+  const pos = (v: number) => ((v - lo) / (hi - lo)) * height;
+  return (
+    <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ height, flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
+      {values.map((v, i) => (
+        <View key={i} style={{ flex: 1, height: Math.max(3, pos(v)), borderRadius: 2, backgroundColor: i === values.length - 1 ? lastColor : barColor }} />
+      ))}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: pos(setpoint), borderTopWidth: 1, borderStyle: 'dashed', borderColor: lineColor }} />
+    </View>
+  );
+}
+
 export function ActionButton({
   title,
   onPress,
@@ -111,17 +101,17 @@ export function ActionButton({
 }) {
   const componentStyles = StyleSheet.create({
     button: {
-      minHeight: 50,
-      borderRadius: 9,
+      minHeight: 52,
+      borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 18,
-      backgroundColor: secondary ? 'transparent' : palette.forest,
-      borderWidth: secondary ? 1 : 0,
-      borderColor: palette.inputBorder,
+      paddingHorizontal: space.xl,
+      backgroundColor: secondary ? 'transparent' : palette.lime,
+      borderWidth: secondary ? 1.5 : 0,
+      borderColor: palette.greenText,
       opacity: disabled ? 0.5 : 1,
     },
-    text: { color: secondary ? palette.greenText : palette.onForest, fontSize: 15, fontWeight: '700' as const },
+    text: { color: secondary ? palette.greenText : palette.onLime, ...type.label },
   });
 
   return (
@@ -130,7 +120,8 @@ export function ActionButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [componentStyles.button, pressed && !disabled && { opacity: 0.78 }]}
+      hitSlop={space.xs}
+      style={({ pressed }) => [componentStyles.button, pressed && !disabled && { backgroundColor: secondary ? palette.greenSurface : palette.limePressed }]}
     >
       <Text style={componentStyles.text}>{title}</Text>
     </Pressable>
@@ -138,7 +129,7 @@ export function ActionButton({
 }
 
 export function SectionTitle({ children, palette }: { children: string; palette: Palette }) {
-  return <Text style={{ color: palette.ink, fontSize: 18, fontWeight: '800' }}>{children}</Text>;
+  return <Text style={[type.heading, { color: palette.ink }]}>{children}</Text>;
 }
 
 const styles = StyleSheet.create({
@@ -146,9 +137,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 8,
+    gap: space.sm,
     minHeight: 48,
-    borderRadius: 8,
+    borderRadius: radius.control,
   },
   logo: { width: 38, height: 38 },
   wordmark: { width: 112, height: 42 },

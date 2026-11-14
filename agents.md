@@ -5,9 +5,10 @@
 - The app is an Expo / React Native TypeScript prototype in `mobile/`; its planned live-demo source is a Wokwi ESP32/DHT22 simulation through a local Node bridge.
 - Preserve the supplied Poultri logo and wordmark without redrawing or recoloring them.
 - Keep Expo Go development and the existing EAS APK profile working.
-- Read `mvp-requirements.md` and `build-requirements.md` before changing prototype behavior. The MVP requirements define demo scope and behavior; the build guide defines architecture, setup, and the bridge API. Its AI-chat section is future-work context, not approved demo scope.
+- Read `mvp-requirements.md` and `build-requirements.md` before changing prototype behavior. The MVP requirements define demo scope and behavior; the build guide defines architecture, setup, and the bridge API. Its AI-chat section is future work for a real AI service. The approved Buddy screen is scripted and uses no AI model.
 - Do not recreate the deleted desktop simulator. The bridge has no UI and is local-only.
-- Do not add cloud brokers, accounts, Firebase, push notifications, cameras, production records, actuators, diagnoses, or farm-validity claims.
+- Approved additions (2026-11): Home, History, and Buddy tabs, a Settings screen, in-memory temperature history on the bridge (`/api/history`), and a scripted Buddy that answers only from the app's readings.
+- Do not add cloud brokers, accounts, Firebase, push notifications, cameras, production records, actuators, diagnoses, an AI service, or farm-validity claims.
 - Keep simulated labels visible and preserve the official Poultri artwork unchanged.
 
 ## Minimal-change guardrails

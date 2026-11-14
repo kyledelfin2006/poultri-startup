@@ -34,10 +34,10 @@ This repository demonstrates one small part of Poultri: **a simulated ESP32/DHT2
 
 - Wokwi simulates one ESP32 and one DHT22. Change temperature and humidity from the sensor controls.
 - The ESP32 sends readings every two seconds to the local Node bridge.
-- The mobile app opens to a House 1 overview with temperature, humidity, simulated fan percentage, connection state, and inspection-prompt state. Its light and dark screens use a warm neutral canvas, charcoal house and airflow cards, sage accents, and a terracotta inspection state; the supplied artwork is unchanged. Open House 1 for the simulation setpoint, sample age, inspection prompt and acknowledgement, combined app-only fan and vent drawings, and local bridge setup. The line drawing of the house is decorative; readings remain Wokwi simulated data.
+- The mobile app opens to a House 1 overview with temperature, humidity, simulated fan percentage, connection state, and inspection-prompt state. Its light and dark screens use a warm neutral canvas, charcoal house and airflow cards, sage accents, and a terracotta inspection state; the supplied artwork is unchanged. Open House 1 for the demo setpoint, sample age, inspection prompt and acknowledgement, combined app-only fan and vent drawings, and local bridge setup. The line drawing of the house is decorative; readings remain Wokwi simulated data.
 - The first fresh reading after connecting or resetting is saved as session context. A reading at or above the **25°C demo setpoint** creates an inspection prompt. The Wokwi LED and app show a simulated fan level: **0% below 25°C, 50% from 25°C to below 27°C, and 100% at or above 27°C**.
 - On House 1 detail, an app-only fan drawing is still at **0%** and spins at **50%** or **100%**. Animated vent louvers follow the same percentage: **closed at 0%, half-open at 50%, fully open at 100%**. Both drawings show a dash before the first reading and label retained states stale or disconnected. No physical fan, vent, or servo is connected or controlled.
-- Acknowledge the prompt, lower the temperature below 25°C to show recovery, and tap **Reset session** to clear the app session.
+- Acknowledge the prompt, lower the temperature below 25°C to show recovery, and tap **Reset session**, then **Reset** to confirm, to clear the app session.
 - Humidity is display-only. All values and the alert rule are illustrative.
 
 **Rule note:** the concept note does not define a numerical temperature threshold or fan-control rule. The **25°C setpoint and fan levels are demo-only choices**, not farm settings or poultry-health limits. The LED is only a visual output indicator; no physical fan is connected or controlled.
@@ -153,6 +153,8 @@ npx.cmd expo start
 Scan the QR code with Expo Go and keep this terminal running. For connected readings on an Android phone, use the preview APK above; for connected readings on the emulator, use the local Android build.
 ### E. Start the bridge and connect the app (each demo)
 
+Optional: to show a full History chart before Wokwi has run for long, run `npm.cmd run seed` in `bridge/` after the bridge starts. It loads a fixed 24-hour **simulated** sequence that the app labels as replayed sample data. `npm.cmd run seed -- --clear` removes it; restarting the bridge also clears it.
+
 1. Open a new PowerShell window at the repository folder, then start the bridge:
 
    ~~~powershell
@@ -168,7 +170,7 @@ Scan the QR code with Expo Go and keep this terminal running. For connected read
 5. Open the Poultri app and tap the **House 1** overview card. On its detail screen, enter the laptop's Wi-Fi URL printed by the bridge, such as `http://192.168.1.20:4174`. In an Android emulator, enter `http://10.0.2.2:4174` instead. Tap **Connect to bridge**. Do not enter `host.wokwi.internal` in the app; that special address is only for Wokwi.
 6. Wait for the app to show a reading. Keep the Wokwi DHT22 at **24.0°C** until the first reading is received; that becomes the session reference.
 7. Click the DHT22 in Wokwi to open its controls. Raise the temperature to **25.0°C**. The app should show an inspection prompt, a **50%** spinning fan drawing, and a half-open visual vent. At **27.0°C**, the fan drawing should spin faster at **100%** and the vent should be fully open. Below **25.0°C**, the fan drawing should stop and the vent should appear closed.
-8. On the House 1 detail screen, tap **Acknowledge**, then lower the temperature below **25.0°C**. The app should show **Reading recovered**; the prompt remains until you tap **Reset session**.
+8. On the House 1 detail screen, tap **Acknowledge**, then lower the temperature below **25.0°C**. The app should show **Recovered** (with **Acknowledged**); the prompt remains until you tap **Reset session**.
 
 The ESP32 sends a reading every two seconds and the app checks the bridge every second. Allow a few seconds for each sensor change to appear.
 
@@ -186,7 +188,7 @@ There is no single control that resets Wokwi, the bridge, and the app together. 
 
 1. Restart the Wokwi simulation, or set the DHT22 temperature below the alert trigger.
 2. Wait for a fresh reading in the app.
-3. Open House 1 and tap **Reset session** on its detail screen.
+3. Open House 1, tap **Reset session** on its detail screen, then tap **Reset** to confirm.
 4. Raise the DHT22 temperature again.
 
 Keep the bridge running between runs. The next Wokwi POST replaces its latest reading; the app reset clears the app's session reference and prompt.

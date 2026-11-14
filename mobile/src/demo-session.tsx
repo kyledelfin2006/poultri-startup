@@ -31,9 +31,12 @@ type DemoSessionValue = {
   connect: () => Promise<void>;
   acknowledge: () => void;
   resetDemo: () => void;
+  samples: number[];
+  activeUrl: string;
 };
 
 const STALE_AFTER_MS = 5000;
+const MAX_SAMPLES = 120;
 
 async function getJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
@@ -69,7 +72,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [activeUrl, setActiveUrl] = useState('');
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [message, setMessage] = useState('Open House 1 to connect to the Wokwi bridge.');
+  const [message, setMessage] = useState('Connect to the bridge in Settings.');
   const [reading, setReading] = useState<Reading | null>(null);
   const [baseline, setBaseline] = useState<number | null>(null);
   const [alertRecord, setAlertRecord] = useState<AlertRecord | null>(null);
@@ -78,6 +81,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const alertRef = useRef<AlertRecord | null>(null);
   const previousStatusRef = useRef('Not connected');
   const previousAlertRef = useRef<AlertRecord | null>(null);
+  const [samples, setSamples] = useState<number[]>([]);
+  const samplesRef = useRef<number[]>([]);
+  const lastSampleAtRef = useRef('');
 
   const sampleAgeMs = reading ? Math.max(0, now - Date.parse(reading.receivedAt)) : 0;
   const stale = reading !== null && sampleAgeMs > STALE_AFTER_MS;
@@ -93,9 +99,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const statusDescription = connecting
     ? message
     : stale
-      ? `Last Wokwi sample received ${Math.floor(sampleAgeMs / 1000)}s ago.`
+      ? `Last Wokwi sample ${Math.floor(sampleAgeMs / 1000)}s ago.`
       : connected
-        ? (reading ? 'Receiving simulated data from the local bridge.' : 'Bridge is ready. Waiting for a Wokwi reading.')
+        ? (reading ? 'Receiving Wokwi simulated data.' : 'Connected. Waiting for Wokwi.')
         : message;
 
   useEffect(() => {
@@ -116,13 +122,13 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     const previous = previousAlertRef.current;
     if (Platform.OS === 'ios' && alertRecord) {
       if (!previous) {
-        AccessibilityInfo.announceForAccessibility('Temperature threshold reached. Please inspect House 1.');
+        AccessibilityInfo.announceForAccessibility('Inspect House 1. Temperature reached the demo setpoint.');
       }
       if (previous && !previous.acknowledged && alertRecord.acknowledged) {
-        AccessibilityInfo.announceForAccessibility('Inspection prompt acknowledged.');
+        AccessibilityInfo.announceForAccessibility('Acknowledged.');
       }
       if (previous && !previous.recovered && alertRecord.recovered) {
-        AccessibilityInfo.announceForAccessibility('Reading recovered. Inspection prompt retained.');
+        AccessibilityInfo.announceForAccessibility('Recovered. Kept until Reset session.');
       }
     }
     previousAlertRef.current = alertRecord;
@@ -147,6 +153,11 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
 
         const sample = payload.reading;
         setReading(sample);
+        if (lastSampleAtRef.current !== sample.receivedAt) {
+          lastSampleAtRef.current = sample.receivedAt;
+          samplesRef.current = [...samplesRef.current, sample.temperatureC].slice(-MAX_SAMPLES);
+          setSamples(samplesRef.current);
+        }
         const fresh = Date.now() - Date.parse(sample.receivedAt) <= STALE_AFTER_MS;
         if (!fresh) return;
 
@@ -204,9 +215,12 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       setBaseline(null);
       setAlertRecord(null);
       setReading(null);
+      samplesRef.current = [];
+      lastSampleAtRef.current = '';
+      setSamples([]);
       setActiveUrl(normalized);
       setConnected(true);
-      setMessage('Connected. Waiting for a fresh Wokwi reading.');
+      setMessage('Connected. Waiting for Wokwi.');
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'request failed';
       setMessage(`Could not connect: ${detail}`);
@@ -228,7 +242,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     alertRef.current = null;
     setBaseline(null);
     setAlertRecord(null);
-    setMessage('Demo reset. The next fresh reading becomes the reference.');
+    samplesRef.current = [];
+    setSamples([]);
+    setMessage('Session reset. The next reading becomes the reference.');
   }
 
   return (
@@ -249,6 +265,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         connect,
         acknowledge,
         resetDemo,
+        samples,
+        activeUrl: connected ? activeUrl : '',
       }}
     >
       {children}

@@ -30,6 +30,11 @@ The following concept capabilities remain outside this demo: camera or bird-move
 7. The presenter can enter the laptop's local bridge URL in the app and connect before starting the timed walkthrough.
 8. House 1 detail shows an **app-only simulated fan drawing** and vent. The fan drawing is still at 0%, spins at 50% or 100%, and stops when data becomes stale or disconnected; reduced-motion settings keep it still. The vent follows the same Wokwi `fanSpeedPct`: closed at 0%, half-open at 50%, fully open at 100%. Before the first reading both show a dash; retained values are marked stale or disconnected. No physical fan, vent, or servo is connected or controlled.
 
+9. The app has Home, History, and Buddy tabs, and a Settings screen opened from Home. Settings holds the bridge URL, connect, and reset controls.
+10. The bridge records one temperature point every 10 seconds for up to 24 hours, in memory. The History tab shows a 6h, 12h, or 24h line chart with the demo setpoint, and the minimum, average, and maximum for the chosen range. Without a connected bridge or recorded points it says so; it never shows invented data. For demos, a labeled replay script (`npm run seed` in `bridge/`) can load a fixed 24-hour simulated sequence; History and Buddy then state that those points are replayed sample data, and `npm run seed -- --clear` removes them.
+11. The Home and detail screens show an airflow label derived from the simulated fan percentage: Still at 0%, Moderate below 75%, Strong at 75% or more. It is a label for the simulated fan, not a measurement.
+12. The Buddy tab is a scripted helper with no AI model. It explains the current reading, summarizes the recorded history, and describes how the demo works, using only the app's own data. It declines poultry-health questions.
+
 ## Two-minute presenter walkthrough
 
 Complete setup before starting the timer: run the bridge, start Wokwi with its private gateway, open the app, and connect it to the bridge.
@@ -49,6 +54,7 @@ Complete setup before starting the timer: run the bridge, start Wokwi with its p
 - Cameras, bird-activity classification, ammonia/CO₂ measurement, SMS, and physical fan, vent, servo, or temperature-control commands.
 - Clinical or husbandry advice, validated safety thresholds, farm compatibility claims, offline-duration claims, or measured farm outcomes.
 - Production security, multi-user access, internet deployment, and remote monitoring.
+- A real AI service, stored history beyond the bridge's memory, and any health or husbandry advice from Buddy.
 
 The Wokwi MQ-2 part is a combustible-gas model and must not be presented as an ammonia or CO₂ sensor. See [Wokwi's gas sensor reference](https://docs.wokwi.com/parts/wokwi-gas-sensor).
 
